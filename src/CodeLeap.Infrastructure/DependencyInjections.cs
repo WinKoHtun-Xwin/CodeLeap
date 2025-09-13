@@ -1,15 +1,12 @@
-﻿using CodeLeap.Core.IRepositories;
+﻿using CodeLeap.Application.Interfaces;
+using CodeLeap.Core.IRepositories;
+using CodeLeap.Infrastructure.AuthJWT;
 using CodeLeap.Infrastructure.PostgresSQL;
+using CodeLeap.Infrastructure.Security;
 using CodeLeap.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeLeap.Infrastructure
 {
@@ -25,6 +22,9 @@ namespace CodeLeap.Infrastructure
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IPasswordService, PasswordService>();
             return services;
         }
     }

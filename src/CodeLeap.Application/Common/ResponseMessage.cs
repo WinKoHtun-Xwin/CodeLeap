@@ -12,6 +12,21 @@ namespace CodeLeap.Application.Common
             public const string BadRequest = "Bad request";
         }
 
+        public static class RegisterNewUserMessage
+        {
+            public const string Success = "User registered successfully";
+            public const string UserAlreadyExists = "User with the same username already exists";
+            public const string RegistrationFailed = "User registration failed";
+        }
+        public static class loginMessage
+        {
+
+            public const string Success = "Login successful";
+            public const string InvalidCredentials = "Invalid username or password";
+            public const string UserNotFound = "User not found";
+            public const string TokenGenerationFailed = "Failed to generate authentication token";
+        }
+
         public static class UserMessage
         {
             public const string Success = "Operation completed successfully";

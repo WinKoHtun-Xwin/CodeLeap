@@ -7,6 +7,11 @@ namespace CodeLeap.Infrastructure.Repositories
 {
     public class UserRepository(PostgresSQLDbContext dbContext) : IUserRepository
     {
+
+        public async Task<UserEntity?> GetByUserNameAsync(string username)
+        {
+            return await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Username == username.Trim());
+        }
         public async Task<IEnumerable<UserEntity>> GetAllUsersAsync()
         {
             return await dbContext.Set<UserEntity>().ToListAsync();

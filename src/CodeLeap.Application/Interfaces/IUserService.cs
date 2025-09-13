@@ -1,5 +1,6 @@
 ﻿using CodeLeap.Application.DTOs.User;
 using CodeLeap.Application.Common;
+using CodeLeap.Application.DTOs.Auth;
 
 namespace CodeLeap.Application.Interfaces
 {

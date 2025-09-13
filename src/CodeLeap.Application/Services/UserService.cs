@@ -3,16 +3,21 @@ using CodeLeap.Application.Interfaces;
 using CodeLeap.Core.Entities;
 using CodeLeap.Core.IRepositories;
 using CodeLeap.Application.Common;
+using CodeLeap.Application.DTOs.Auth;
 
 namespace CodeLeap.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPasswordService passwordService;
+        private readonly IJwtService jwtService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IPasswordService passwordService, IJwtService jwtService)
         {
             _userRepository = userRepository;
+            this.passwordService = passwordService;
+            this.jwtService = jwtService;   
         }
 
         public async Task<BaseResponseModel<IEnumerable<UserDto>>> GetAllUsersAsync()
@@ -67,6 +72,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                createUserDto.Password = passwordService.HashPassword(createUserDto.Password);
                 var userEntity = new UserEntity
                 {
                     Id = Guid.NewGuid().ToString(),

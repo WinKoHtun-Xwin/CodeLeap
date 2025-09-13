@@ -4,6 +4,7 @@ namespace CodeLeap.Core.IRepositories
 {
     public interface IUserRepository
     {
+        Task<UserEntity?> GetByUserNameAsync(string username);
         Task<IEnumerable<UserEntity>> GetAllUsersAsync();
 
         Task<UserEntity?> GetUserByIdAsync(string id);

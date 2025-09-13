@@ -17,6 +17,8 @@ namespace CodeLeap.Infrastructure.PostgresSQL
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
 
+        public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -74,7 +76,31 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                      .HasForeignKey(p => p.CreatedBy)           // FK in Product
                      .HasPrincipalKey(u => u.Id)                // PK in User
                      .OnDelete(DeleteBehavior.Restrict);        // Prevent cascade delete
-                    });
+             });
+
+            modelBuilder.Entity<RefreshTokenEntity>(entity =>
+            {
+                entity.ToTable("RefreshTokens");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                    .IsRequired();
+
+                entity.Property(e => e.UserId)
+                    .IsRequired();
+
+                entity.Property(e => e.Token)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.ExpiresAt)
+                    .IsRequired();
+
+                entity.Property(e => e.IsRevoked)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+            });
         }
     }
 }

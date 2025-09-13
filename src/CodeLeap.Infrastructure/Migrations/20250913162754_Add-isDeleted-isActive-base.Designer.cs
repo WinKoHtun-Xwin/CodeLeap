@@ -3,6 +3,7 @@ using System;
 using CodeLeap.Infrastructure.PostgresSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CodeLeap.Infrastructure.Migrations
 {
     [DbContext(typeof(PostgresSQLDbContext))]
-    partial class PostgresSQLDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250913162754_Add-isDeleted-isActive-base")]
+    partial class AddisDeletedisActivebase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
