@@ -13,6 +13,7 @@ namespace CodeLeap.Core.Entities
         public required decimal Price { get; set; }
         public required string Description { get; set; }
         public required int Stock { get; set; }
-        public required UserEntity User { get; set; }
+        public required string ImageUrl { get; set; }
+        public virtual UserEntity? User { get; set; }
     }
 }

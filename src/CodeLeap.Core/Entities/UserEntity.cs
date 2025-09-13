@@ -10,6 +10,7 @@ namespace CodeLeap.Core.Entities
     {
         public required string Password { get; set; }
         public required string Username { get; set; }
-        public ICollection<ProductEntity> Products { get; set; } = new List<ProductEntity>();
+
+        public virtual ICollection<ProductEntity> Products { get; set; } = new List<ProductEntity>();
     }
 }

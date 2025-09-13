@@ -24,6 +24,7 @@ namespace CodeLeap.Infrastructure
             });
 
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
             return services;
         }
     }

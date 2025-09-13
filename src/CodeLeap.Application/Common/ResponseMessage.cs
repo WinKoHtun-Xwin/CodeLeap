@@ -28,11 +28,16 @@ namespace CodeLeap.Application.Common
 
         public static class ProductMessage
         {
+            public const string GetSuccess = "Product retrieved successfully";
+            public const string GetAllSuccess = "Products retrieved successfully";
             public const string Success = "Operation completed successfully";
             public const string CreatedSuccess = "Product created successfully";
             public const string CreatedFail = "Failed to create product";
             public const string UpdatedSuccess = "Product updated successfully";
             public const string UpdatedFail = "Failed to update product";
+            public const string DeletedSuccess = "Product deleted successfully";
+            public const string DeletedFail = "Failed to delete product";
+            public const string NotFound = "Product not found";
         }
     }
 }

@@ -65,11 +65,16 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                 entity.Property(e => e.CreatedBy)
                     .IsRequired();
 
-                entity.HasOne(p => p.User)
-                    .WithMany(u => u.Products)
-                    .HasForeignKey(p => p.CreatedBy)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
+                entity.Property(e => e.ImageUrl)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.HasOne<UserEntity>()                      // Product has one User
+                     .WithMany(u => u.Products)                 // User has many Products
+                     .HasForeignKey(p => p.CreatedBy)           // FK in Product
+                     .HasPrincipalKey(u => u.Id)                // PK in User
+                     .OnDelete(DeleteBehavior.Restrict);        // Prevent cascade delete
+                    });
         }
     }
 }

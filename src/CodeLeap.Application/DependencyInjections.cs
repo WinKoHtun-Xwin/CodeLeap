@@ -10,6 +10,7 @@ namespace CodeLeap.Application
         {
             // Register services
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IProductService, ProductService>();
 
             return services;
         }

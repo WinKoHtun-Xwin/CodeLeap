@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CodeLeap.Infrastructure.Migrations
 {
     [DbContext(typeof(PostgresSQLDbContext))]
-    [Migration("20250913125741_Init-Postgres-Db")]
+    [Migration("20250913142056_Init-Postgres-Db")]
     partial class InitPostgresDb
     {
         /// <inheritdoc />
@@ -42,6 +42,11 @@ namespace CodeLeap.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -57,12 +62,16 @@ namespace CodeLeap.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UpdatedBy")
-                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Products", (string)null);
                 });
@@ -88,7 +97,6 @@ namespace CodeLeap.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UpdatedBy")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Username")
@@ -103,11 +111,15 @@ namespace CodeLeap.Infrastructure.Migrations
 
             modelBuilder.Entity("CodeLeap.Core.Entities.ProductEntity", b =>
                 {
-                    b.HasOne("CodeLeap.Core.Entities.UserEntity", "User")
+                    b.HasOne("CodeLeap.Core.Entities.UserEntity", null)
                         .WithMany("Products")
                         .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CodeLeap.Core.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
