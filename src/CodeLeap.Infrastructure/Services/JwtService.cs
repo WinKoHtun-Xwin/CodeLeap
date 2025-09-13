@@ -8,7 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace CodeLeap.Infrastructure.AuthJWT;
+namespace CodeLeap.Infrastructure.Services;
 
 public class JwtService : IJwtService
 {

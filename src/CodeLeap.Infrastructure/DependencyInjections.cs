@@ -1,6 +1,5 @@
 ﻿using CodeLeap.Application.Interfaces;
 using CodeLeap.Core.IRepositories;
-using CodeLeap.Infrastructure.AuthJWT;
 using CodeLeap.Infrastructure.PostgresSQL;
 using CodeLeap.Infrastructure.Security;
 using CodeLeap.Infrastructure.Repositories;
