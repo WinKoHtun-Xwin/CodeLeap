@@ -8,8 +8,8 @@ namespace CodeLeap.Core.Entities
 {
     public class UserEntity : BaseEntity
     {
-        public required string password { get; set; }
+        public required string Password { get; set; }
         public required string Username { get; set; }
-
+        public ICollection<ProductEntity> Products { get; set; } = new List<ProductEntity>();
     }
 }

@@ -1,4 +1,6 @@
-﻿using CodeLeap.Infrastructure.PostgresSQL;
+﻿using CodeLeap.Core.IRepositories;
+using CodeLeap.Infrastructure.PostgresSQL;
+using CodeLeap.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,8 +20,10 @@ namespace CodeLeap.Infrastructure
             services.AddDbContext<PostgresSQLDbContext>(Options =>
             {
                 Options.UseNpgsql(configuration.GetConnectionString("aws_postgres_url"), 
-                    b => b.MigrationsAssembly("CodeLeap.API"));
+                    b => b.MigrationsAssembly("CodeLeap.Infrastructure"));
             });
+
+            services.AddScoped<IUserRepository, UserRepository>();
             return services;
         }
     }

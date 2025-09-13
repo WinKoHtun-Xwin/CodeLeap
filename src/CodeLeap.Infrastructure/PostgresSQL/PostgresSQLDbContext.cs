@@ -17,13 +17,13 @@ namespace CodeLeap.Infrastructure.PostgresSQL
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
 
-        protected void onModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<UserEntity>(entity =>
             {
-                entity.ToTable("users");
+                entity.ToTable("Users");
 
                 entity.HasKey(e => e.Id);
 
@@ -34,13 +34,13 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(e => e.password)
+                entity.Property(e => e.Password)
                     .IsRequired()
                     .HasMaxLength(500);
             });
 
             modelBuilder.Entity<ProductEntity>(entity => {
-                entity.ToTable("products");
+                entity.ToTable("Products");
 
                 entity.HasKey(e => e.Id);
 
@@ -61,6 +61,14 @@ namespace CodeLeap.Infrastructure.PostgresSQL
 
                 entity.Property(e => e.Stock)
                     .IsRequired();
+
+                entity.Property(e => e.CreatedBy)
+                    .IsRequired();
+
+                entity.HasOne(p => p.User)
+                    .WithMany(u => u.Products)
+                    .HasForeignKey(p => p.CreatedBy)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

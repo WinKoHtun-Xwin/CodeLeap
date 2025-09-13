@@ -7,7 +7,8 @@ namespace CodeLeap.API
     {
         public static IServiceCollection AddApiDI(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddApplicationDI().AddInfrastructureDI(configuration);
+            services.AddApplicationDI();
+            services.AddInfrastructureDI(configuration);
             return services;
         }
     }

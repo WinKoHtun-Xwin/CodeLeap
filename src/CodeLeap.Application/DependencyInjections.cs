@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CodeLeap.Application.Interfaces;
+using CodeLeap.Application.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CodeLeap.Application
 {
@@ -11,6 +8,9 @@ namespace CodeLeap.Application
     {
         public static IServiceCollection AddApplicationDI(this IServiceCollection services)
         {
+            // Register services
+            services.AddScoped<IUserService, UserService>();
+
             return services;
         }
     }
