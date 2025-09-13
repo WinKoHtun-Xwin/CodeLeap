@@ -18,7 +18,7 @@ namespace CodeLeap.Application.Common
             public const string UserAlreadyExists = "User with the same username already exists";
             public const string RegistrationFailed = "User registration failed";
         }
-        public static class loginMessage
+        public static class LoginMessage
         {
 
             public const string Success = "Login successful";
@@ -53,6 +53,7 @@ namespace CodeLeap.Application.Common
             public const string DeletedSuccess = "Product deleted successfully";
             public const string DeletedFail = "Failed to delete product";
             public const string NotFound = "Product not found";
+            public const string AlreadyExists = "Product already exists";
         }
     }
 }

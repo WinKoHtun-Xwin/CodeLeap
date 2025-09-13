@@ -13,4 +13,17 @@ namespace CodeLeap.Application.Common
         public static BaseResponseModel<T> Failure(string message , string error="")
             => new() { Success = false, Message = message , Error = error };
     }
+
+    public class BaseResponseModelPagination<T> : BaseResponseModel<T>
+    {
+        public PaginationDto Pagination { get; set; } = new PaginationDto();
+    }
+
+    public class PaginationDto
+    {
+        public int PageNumber { get; set; } = 0;
+        public int PageSize { get; set; } = 0;
+        public int TotalPages { get; set; } = 0;
+        public int TotalItems { get; set; } = 0;
+    }
 }

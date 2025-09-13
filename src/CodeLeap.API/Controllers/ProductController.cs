@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using CodeLeap.Application.Interfaces;
 using CodeLeap.Application.DTOs.Product;
 using CodeLeap.Application.Common;
-using CodeLeap.API.Extensions;
 
 namespace CodeLeap.API.Controllers
 {
@@ -16,6 +15,14 @@ namespace CodeLeap.API.Controllers
         public ProductController(IProductService ProductService)
         {
             _productService = ProductService;
+        }
+
+        [HttpGet("pagination")]
+        [AllowAnonymous]
+        public async Task<ActionResult<BaseResponseModelPagination<IEnumerable<ProductDto>>>> GetProductsByPagination([FromQuery] PaginationRequestDto paginationRequestDto)
+        {
+            var result = await _productService.GetProductsByPaginationAsync(paginationRequestDto);
+            return Ok(result);
         }
 
         [HttpGet]

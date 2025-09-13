@@ -53,7 +53,7 @@ namespace CodeLeap.Test
         public async Task TestRefreshTokenAsync_NullToken()
         {
             // Act
-            var result = await authService.RefreshTokenAsync("");
+            var result = await authService.RefreshTokenAsync(null!);
 
             // Assert
             Assert.False(result.Success);
@@ -76,7 +76,7 @@ namespace CodeLeap.Test
         {
             // Arrange
             var refreshToken = "invalid-refresh-token";
-            _ = jwtService.Setup(x => x.RefreshTokenAsync(refreshToken)).ReturnsAsync(null as GetAuthDto);
+            jwtService.Setup(x => x.RefreshTokenAsync(refreshToken)).ThrowsAsync(new Exception("Invalid token"));
 
             // Act
             var result = await authService.RefreshTokenAsync(refreshToken);
@@ -155,7 +155,7 @@ namespace CodeLeap.Test
                 Password = "password123"
             };
 
-            userRepo.Setup(x => x.GetByUserNameAsync("nonexistent")).ReturnsAsync(null as UserEntity);
+            userRepo.Setup(x => x.GetByUserNameAsync("nonexistent")).ReturnsAsync((UserEntity?)null);
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -216,7 +216,7 @@ namespace CodeLeap.Test
 
             userRepo.Setup(x => x.GetByUserNameAsync("testuser")).ReturnsAsync(user);
             passwordService.Setup(x => x.VerifyPassword("hashed-password", "password123")).Returns(true);
-            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ReturnsAsync(null as GetAuthDto);
+            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ThrowsAsync(new Exception("Token generation failed"));
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -270,7 +270,7 @@ namespace CodeLeap.Test
                 CreatedBy = "new-user-id"
             };
 
-            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync(null as UserEntity);
+            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
             passwordService.Setup(x => x.HashPassword("password123")).Returns("hashed-password");
             userRepo.Setup(x => x.CreateUserAsync(It.IsAny<UserEntity>())).ReturnsAsync(createdUser);
 
@@ -322,9 +322,9 @@ namespace CodeLeap.Test
                 Password = "password123"
             };
 
-            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync(null as UserEntity);
+            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
             passwordService.Setup(x => x.HashPassword("password123")).Returns("hashed-password");
-            userRepo.Setup(x => x.CreateUserAsync(It.IsAny<UserEntity>())).ReturnsAsync(null as UserEntity);
+            userRepo.Setup(x => x.CreateUserAsync(It.IsAny<UserEntity>())).ThrowsAsync(new Exception("User creation failed"));
 
             // Act
             var result = await authService.RegisterNewUser(registerDto);
@@ -353,7 +353,7 @@ namespace CodeLeap.Test
                 CreatedBy = "new-user-id"
             };
 
-            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync(null as UserEntity);
+            userRepo.Setup(x => x.GetByUserNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
             passwordService.Setup(x => x.HashPassword("password123")).Returns("hashed-password");
             userRepo.Setup(x => x.CreateUserAsync(It.IsAny<UserEntity>())).ReturnsAsync(createdUser);
 
