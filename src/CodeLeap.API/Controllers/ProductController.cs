@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using CodeLeap.Application.Interfaces;
 using CodeLeap.Application.DTOs.Product;
 using CodeLeap.Application.Common;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CodeLeap.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [SwaggerTag("Product management endpoints for creating, reading, updating, and deleting products")]
     public class ProductController : BaseController
     {
         private readonly IProductService _productService;
@@ -19,6 +21,8 @@ namespace CodeLeap.API.Controllers
 
         [HttpGet("pagination")]
         [AllowAnonymous]
+        [SwaggerOperation(Summary = "Get products with pagination", Description = "Retrieves products with pagination support. No authentication required.")]
+        [SwaggerResponse(200, "Products retrieved successfully", typeof(BaseResponseModelPagination<IEnumerable<ProductDto>>))]
         public async Task<ActionResult<BaseResponseModelPagination<IEnumerable<ProductDto>>>> GetProductsByPagination([FromQuery] PaginationRequestDto paginationRequestDto)
         {
             var result = await _productService.GetProductsByPaginationAsync(paginationRequestDto);
@@ -98,6 +102,10 @@ namespace CodeLeap.API.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "AdminOnly")]
+        [SwaggerOperation(Summary = "Delete product", Description = "Deletes a product. Requires Admin role.")]
+        [SwaggerResponse(200, "Product deleted successfully", typeof(BaseResponseModel<bool>))]
+        [SwaggerResponse(400, "Invalid ID or deletion failed")]
+        [SwaggerResponse(403, "Forbidden - Admin role required")]
         public async Task<ActionResult<BaseResponseModel<bool>>> DeleteProduct(string id)
         {
             if (string.IsNullOrEmpty(id))

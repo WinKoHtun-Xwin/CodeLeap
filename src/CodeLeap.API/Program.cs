@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CodeLeap.API
 {
@@ -34,13 +35,66 @@ namespace CodeLeap.API
                 c.SwaggerDoc("v1", new OpenApiInfo 
                 { 
                     Title = "CodeLeap API", 
-                    Version = "v1",
-                    Description = "A simple example ASP.NET Core Web API"
+                    Version = "v1.0.0",
+                    Description = @"
+                    # CodeLeap API Documentation
+
+                    A comprehensive ASP.NET Core Web API for managing users and products with robust authentication and authorization.
+
+                    ## Features
+                    - JWT-based authentication with refresh tokens
+                    - Role-based authorization (Admin, User)
+                    - CRUD operations for Users and Products
+                    - Comprehensive error handling and logging
+                    - Clean Architecture implementation
+
+                    ## Authentication Flow
+                    1. **Register**: Create a new user account at `/api/Auth/register`
+                    2. **Login**: Authenticate with credentials at `/api/Auth/login` to receive JWT tokens
+                    3. **Access Protected Endpoints**: Include the JWT token in the Authorization header
+                    4. **Refresh Token**: Use the refresh token at `/api/Auth/refreshToken/{refreshToken}` to get new access tokens
+
+                    ## Authorization Policies
+                    - **AdminOnly**: Requires Admin role (e.g., delete operations)
+                    - **UserOrAdmin**: Requires User or Admin role
+                    - **AuthenticatedUser**: Requires any authenticated user
+
+                    ## Response Format
+                    All API responses follow a consistent format:
+                    ```json
+                    {
+                    ""success"": true,
+                    ""message"": ""Operation completed successfully"",
+                    ""data"": { /* response data */ },
+                    ""errors"": []
+                    }
+                    ```",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "CodeLeap Development Team",
+                        Email = "dev@codeleap.com"
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "MIT License"
+                    }
                 });
+
+                // Include XML comments
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
 
                 c.AddSecurityDefinition(bearerScheme, new OpenApiSecurityScheme
                 {
-                    Description = "Enter JWT token (without 'Bearer ' prefix)",
+                    Description = @"JWT Authorization header using the Bearer scheme.
+                      
+Enter 'Bearer' [space] and then your token in the text input below.
+                      
+Example: 'Bearer 12345abcdef'",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
@@ -65,6 +119,13 @@ namespace CodeLeap.API
                         new List<string>()
                     }
                 });
+
+                // Add operation filters for better documentation
+                c.EnableAnnotations();
+                c.DescribeAllParametersInCamelCase();
+                
+                // Add examples for common responses
+                c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             });
 
             builder.Services.AddAuthentication(options =>
