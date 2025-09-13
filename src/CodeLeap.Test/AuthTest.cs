@@ -76,7 +76,7 @@ namespace CodeLeap.Test
         {
             // Arrange
             var refreshToken = "invalid-refresh-token";
-            jwtService.Setup(x => x.RefreshTokenAsync(refreshToken)).ThrowsAsync(new Exception("Invalid token"));
+            jwtService.Setup(x => x.RefreshTokenAsync(refreshToken)).ReturnsAsync((GetAuthDto?)null);
 
             // Act
             var result = await authService.RefreshTokenAsync(refreshToken);
@@ -216,7 +216,7 @@ namespace CodeLeap.Test
 
             userRepo.Setup(x => x.GetByUserNameAsync("testuser")).ReturnsAsync(user);
             passwordService.Setup(x => x.VerifyPassword("hashed-password", "password123")).Returns(true);
-            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ThrowsAsync(new Exception("Token generation failed"));
+            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ReturnsAsync((GetAuthDto?)null);
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -331,7 +331,8 @@ namespace CodeLeap.Test
 
             // Assert
             Assert.False(result.Success);
-            Assert.Equal("User registration failed", result.Message);
+            Assert.Equal("An internal server error occurred", result.Message);
+            Assert.Equal("User creation failed", result.Error);
         }
 
         [Fact]

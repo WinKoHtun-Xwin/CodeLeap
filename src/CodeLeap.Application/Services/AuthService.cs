@@ -47,13 +47,13 @@ namespace CodeLeap.Application.Services
                 {
                     _logger.Error("Failed to refresh token - invalid or expired token");
                     return BaseResponseModel<GetAuthDto>.Failure(
-                        ResponseMessage.loginMessage.InvalidCredentials
+                        ResponseMessage.LoginMessage.InvalidCredentials
                     );
                 }
 
                 return BaseResponseModel<GetAuthDto>.SuccessResponse(
                     getAuthDto,
-                    ResponseMessage.loginMessage.Success
+                    ResponseMessage.LoginMessage.Success
                 );
 
             }
@@ -78,7 +78,7 @@ namespace CodeLeap.Application.Services
                 {
                     _logger.Error("User not found By User : {username}", loginRequest.Username);
                     return BaseResponseModel<GetAuthDto>.Failure(
-                        ResponseMessage.loginMessage.UserNotFound
+                        ResponseMessage.LoginMessage.UserNotFound
                     );
                 }
 
@@ -90,19 +90,19 @@ namespace CodeLeap.Application.Services
                     {
                         _logger.Error("Failed to generate token for user : {username}", loginRequest.Username);
                         return BaseResponseModel<GetAuthDto>.Failure(
-                            ResponseMessage.loginMessage.TokenGenerationFailed
+                            ResponseMessage.LoginMessage.TokenGenerationFailed
                         );
                     }
 
                     _logger.Info("User logged in successfully By User : {username}", loginRequest.Username);
                     return BaseResponseModel<GetAuthDto>.SuccessResponse(
                         getAuthDto,
-                        ResponseMessage.loginMessage.Success
+                        ResponseMessage.LoginMessage.Success
                     );
                 }
                 _logger.Error("Invalid credentials By User : {username}", loginRequest.Username);
                 return BaseResponseModel<GetAuthDto>.Failure(
-                    ResponseMessage.loginMessage.InvalidCredentials
+                    ResponseMessage.LoginMessage.InvalidCredentials
                 );
             }
             catch (Exception ex)
