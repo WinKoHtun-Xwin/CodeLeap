@@ -14,6 +14,9 @@ namespace CodeLeap.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // Custom Dependency Injections
+            builder.Services.AddApiDI(builder.Configuration);
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
