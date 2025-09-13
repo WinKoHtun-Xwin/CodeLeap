@@ -14,4 +14,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CodeLeap.Application\CodeLeap.Application.csproj" />
+    <ProjectReference Include="..\CodeLeap.Core\CodeLeap.Core.csproj" />
+    <ProjectReference Include="..\CodeLeap.Infrastructure\CodeLeap.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
