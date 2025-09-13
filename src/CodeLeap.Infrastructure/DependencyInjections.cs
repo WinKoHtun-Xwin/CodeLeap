@@ -23,10 +23,14 @@ namespace CodeLeap.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            
             services.AddScoped<IJwtService, JwtService>();
-            services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
-            services.AddScoped(typeof(ILoggerService<>), typeof(LoggerService<>));
+            
+            services.AddTransient<IPasswordService, PasswordService>();
+            
+            services.AddSingleton(typeof(ILoggerService<>), typeof(LoggerService<>));
+            
             return services;
         }
     }
