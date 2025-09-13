@@ -1,4 +1,4 @@
-# CodeLeap API
+# CodeLeap Technical Test API
 
 A comprehensive ASP.NET Core Web API built with Clean Architecture principles, featuring JWT authentication, role-based authorization, and CRUD operations for user and product management.
 
