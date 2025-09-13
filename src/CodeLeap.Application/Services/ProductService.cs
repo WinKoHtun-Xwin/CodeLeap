@@ -27,7 +27,7 @@ namespace CodeLeap.Application.Services
             {
                 _logger.Info("Getting all products By User : {userId}", _currentUserService.GetUserId());
                 var products = await _productRepository.GetAllProductAsync();
-                var productDtos = products.Select(MapToProductDto);
+                var productDtos = products.Select(MapToProductDto).Where(dto => dto != null).Cast<ProductDto>();
 
                 return BaseResponseModel<IEnumerable<ProductDto>>.SuccessResponse(
                     productDtos,
@@ -92,10 +92,18 @@ namespace CodeLeap.Application.Services
 
                 var createdProduct = await _productRepository.CreateProductAsync(newProduct);
 
+                if (createdProduct == null)
+                {
+                    _logger.Error("Product creation failed By User : {userId}", _currentUserService.GetUserId());
+                    return BaseResponseModel<ProductDto>.Failure(
+                        ResponseMessage.ProductMessage.CreatedFail
+                    );
+                }
+
                 _logger.Info("Product created successfully By User : {userId}", _currentUserService.GetUserId());
 
                 return BaseResponseModel<ProductDto>.SuccessResponse(
-                    MapToProductDto(createdProduct),
+                    MapToProductDto(createdProduct)!,
                     ResponseMessage.ProductMessage.CreatedSuccess
                 );
             }
@@ -134,10 +142,18 @@ namespace CodeLeap.Application.Services
 
                 var updatedProduct = await _productRepository.UpdateProductAsync(productId, existingProduct);
 
+                if (updatedProduct == null)
+                {
+                    _logger.Error("Product update failed By User : {userId}", _currentUserService.GetUserId());
+                    return BaseResponseModel<ProductDto>.Failure(
+                        ResponseMessage.ProductMessage.UpdatedFail
+                    );
+                }
+
                 _logger.Info("Product updated successfully By User : {userId}", _currentUserService.GetUserId());
 
                 return BaseResponseModel<ProductDto>.SuccessResponse(
-                    MapToProductDto(updatedProduct),
+                    MapToProductDto(updatedProduct)!,
                     ResponseMessage.ProductMessage.UpdatedSuccess
                 );
             }
@@ -185,8 +201,11 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        private static ProductDto MapToProductDto(ProductEntity productEntity)
+        private static ProductDto? MapToProductDto(ProductEntity? productEntity)
         {
+            if (productEntity == null)
+                return null;
+
             return new ProductDto
             {
                 Id = productEntity.Id,

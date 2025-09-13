@@ -32,8 +32,25 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    _logger.Error("Refresh token is null or empty");
+                    return BaseResponseModel<GetAuthDto>.Failure(
+                        ResponseMessage.GeneralMessage.BadRequest
+                    );
+                }
+
                 _logger.Info("Refreshing token");
                 var getAuthDto = await _jwtService.RefreshTokenAsync(refreshToken);
+                
+                if (getAuthDto == null)
+                {
+                    _logger.Error("Failed to refresh token - invalid or expired token");
+                    return BaseResponseModel<GetAuthDto>.Failure(
+                        ResponseMessage.loginMessage.InvalidCredentials
+                    );
+                }
+
                 return BaseResponseModel<GetAuthDto>.SuccessResponse(
                     getAuthDto,
                     ResponseMessage.loginMessage.Success
@@ -68,6 +85,15 @@ namespace CodeLeap.Application.Services
                 if (_passwordService.VerifyPassword(existingUser.Password, loginRequest.Password))
                 {
                     var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.Username, "User");
+                    
+                    if (getAuthDto == null)
+                    {
+                        _logger.Error("Failed to generate token for user : {username}", loginRequest.Username);
+                        return BaseResponseModel<GetAuthDto>.Failure(
+                            ResponseMessage.loginMessage.TokenGenerationFailed
+                        );
+                    }
+
                     _logger.Info("User logged in successfully By User : {username}", loginRequest.Username);
                     return BaseResponseModel<GetAuthDto>.SuccessResponse(
                         getAuthDto,
@@ -117,8 +143,6 @@ namespace CodeLeap.Application.Services
 
                 var result = await _userRepository.CreateUserAsync(createUser);
 
-                _logger.Info("User created successfully By User : {username}", registerNewUserDto.Username);
-
                 if (result == null)
                 {
                     _logger.Error("User creation failed By User : {username}", registerNewUserDto.Username);
@@ -126,6 +150,8 @@ namespace CodeLeap.Application.Services
                         ResponseMessage.RegisterNewUserMessage.RegistrationFailed
                     );
                 }
+
+                _logger.Info("User created successfully By User : {username}", registerNewUserDto.Username);
 
                 return BaseResponseModel<bool>.SuccessResponse(
                     true,

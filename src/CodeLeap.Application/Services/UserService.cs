@@ -26,7 +26,7 @@ namespace CodeLeap.Application.Services
             {
                 _logger.Info("Getting all users By User : {userId}", _currentUserService.GetUserId());
                 var users = await _userRepository.GetAllUsersAsync();
-                var userDtos = users.Select(MapToUserDto);
+                var userDtos = users.Select(MapToUserDto).Where(dto => dto != null).Cast<UserDto>();
                 
                 return BaseResponseModel<IEnumerable<UserDto>>.SuccessResponse(
                     userDtos, 
@@ -92,10 +92,18 @@ namespace CodeLeap.Application.Services
 
                 var createdUser = await _userRepository.CreateUserAsync(userEntity);
                 
+                if (createdUser == null)
+                {
+                    _logger.Error("User creation failed By User : {userId}", _currentUserService.GetUserId());
+                    return BaseResponseModel<UserDto>.Failure(
+                        ResponseMessage.UserMessage.CreatedFail
+                    );
+                }
+
                 _logger.Info("User created successfully By User : {userId}", _currentUserService.GetUserId());
 
                 return BaseResponseModel<UserDto>.SuccessResponse(
-                    MapToUserDto(createdUser),
+                    MapToUserDto(createdUser)!,
                     ResponseMessage.UserMessage.CreatedSuccess
                 );
             }
@@ -125,10 +133,18 @@ namespace CodeLeap.Application.Services
 
                 var updatedUser = await _userRepository.UpdateUserAsync(userId, userEntity);
                 
+                if (updatedUser == null)
+                {
+                    _logger.Error("User update failed - user not found : {userId} By User : {currentUserId}", userId, _currentUserService.GetUserId());
+                    return BaseResponseModel<UserDto>.Failure(
+                        ResponseMessage.UserMessage.NotFound
+                    );
+                }
+
                 _logger.Info("User updated successfully By User : {userId}", _currentUserService.GetUserId());
 
                 return BaseResponseModel<UserDto>.SuccessResponse(
-                    MapToUserDto(updatedUser),
+                    MapToUserDto(updatedUser)!,
                     ResponseMessage.UserMessage.UpdatedSuccess
                 );
             }
@@ -177,8 +193,11 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        private static UserDto MapToUserDto(UserEntity userEntity)
+        private static UserDto? MapToUserDto(UserEntity? userEntity)
         {
+            if (userEntity == null)
+                return null;
+
             return new UserDto
             {
                 Id = userEntity.Id,
