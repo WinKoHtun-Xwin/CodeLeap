@@ -26,6 +26,7 @@ namespace CodeLeap.Infrastructure
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped(typeof(ILoggerService<>), typeof(LoggerService<>));
             return services;
         }
     }

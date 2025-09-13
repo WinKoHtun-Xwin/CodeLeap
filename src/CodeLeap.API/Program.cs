@@ -26,6 +26,7 @@ namespace CodeLeap.API
             });
 
             builder.Services.AddEndpointsApiExplorer();
+
             builder.Services.AddSwaggerGen(c =>
             {
                 const string bearerScheme = "Bearer";
@@ -107,6 +108,11 @@ namespace CodeLeap.API
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddApiDI(builder.Configuration);
+
+            // Add logging (built-in)
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+            builder.Logging.AddDebug();
 
             var app = builder.Build();
 

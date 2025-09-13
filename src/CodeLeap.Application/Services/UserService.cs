@@ -8,20 +8,23 @@ namespace CodeLeap.Application.Services
 {
     public class UserService : IUserService
     {
+        private readonly ILoggerService<UserService> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IPasswordService _passwordService;
         private readonly ICurrentUserService _currentUserService;
-        public UserService(IUserRepository userRepository, IPasswordService passwordService, ICurrentUserService currentUserService)
+        public UserService(IUserRepository userRepository, IPasswordService passwordService, ICurrentUserService currentUserService, ILoggerService<UserService> logger)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;
             _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<BaseResponseModel<IEnumerable<UserDto>>> GetAllUsersAsync()
         {
             try
             {
+                _logger.Info("Getting all users By User : {userId}", _currentUserService.GetUserId());
                 var users = await _userRepository.GetAllUsersAsync();
                 var userDtos = users.Select(MapToUserDto);
                 
@@ -32,6 +35,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.Error("Error getting all users By User : {userId}", _currentUserService.GetUserId(), ex);
                 return BaseResponseModel<IEnumerable<UserDto>>.Failure(
                     ResponseMessage.UserMessage.CreatedFail,
                     ex.Message
@@ -43,14 +47,18 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                _logger.Info("Getting user by id : {id} By User : {userId}", id, _currentUserService.GetUserId());
                 var user = await _userRepository.GetUserByIdAsync(id);
                 
                 if (user == null)
                 {
+                    _logger.Error("User not found : {id} By User : {userId}", id, _currentUserService.GetUserId());
                     return BaseResponseModel<UserDto>.Failure(
                         ResponseMessage.UserMessage.NotFound
                     );
                 }
+
+                _logger.Info("User found : {id} By User : {userId}", id, _currentUserService.GetUserId());
 
                 return BaseResponseModel<UserDto>.SuccessResponse(
                     MapToUserDto(user),
@@ -59,6 +67,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.Error("Error getting user by id By User : {userId}", _currentUserService.GetUserId(), ex);
                 return BaseResponseModel<UserDto>.Failure(
                     ResponseMessage.UserMessage.CreatedFail,
                     ex.Message
@@ -70,6 +79,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                _logger.Info("Creating user By User : {userId}", _currentUserService.GetUserId());
                 createUserDto.Password = _passwordService.HashPassword(createUserDto.Password);
                 var userEntity = new UserEntity
                 {
@@ -82,6 +92,8 @@ namespace CodeLeap.Application.Services
 
                 var createdUser = await _userRepository.CreateUserAsync(userEntity);
                 
+                _logger.Info("User created successfully By User : {userId}", _currentUserService.GetUserId());
+
                 return BaseResponseModel<UserDto>.SuccessResponse(
                     MapToUserDto(createdUser),
                     ResponseMessage.UserMessage.CreatedSuccess
@@ -89,6 +101,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.Error("Error creating user By User : {userId}", _currentUserService.GetUserId(), ex);
                 return BaseResponseModel<UserDto>.Failure(
                     ResponseMessage.UserMessage.CreatedFail,
                     ex.Message
@@ -100,6 +113,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                _logger.Info("Updating user By User : {userId}", _currentUserService.GetUserId());
                 var userEntity = new UserEntity
                 {
                     Id = userId,
@@ -111,6 +125,8 @@ namespace CodeLeap.Application.Services
 
                 var updatedUser = await _userRepository.UpdateUserAsync(userId, userEntity);
                 
+                _logger.Info("User updated successfully By User : {userId}", _currentUserService.GetUserId());
+
                 return BaseResponseModel<UserDto>.SuccessResponse(
                     MapToUserDto(updatedUser),
                     ResponseMessage.UserMessage.UpdatedSuccess
@@ -118,6 +134,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.Error("Error updating user By User : {userId}", _currentUserService.GetUserId(), ex);
                 return BaseResponseModel<UserDto>.Failure(
                     ResponseMessage.UserMessage.UpdatedFail,
                     ex.Message
@@ -129,10 +146,13 @@ namespace CodeLeap.Application.Services
         {
             try
             {
+                _logger.Info("Deleting user");
                 var result = await _userRepository.DeleteUserAsync(id);
                 
                 if (result)
                 {
+                    _logger.Info("User deleted successfully");
+
                     return BaseResponseModel<bool>.SuccessResponse(
                         true,
                         ResponseMessage.UserMessage.DeletedSuccess
@@ -140,6 +160,8 @@ namespace CodeLeap.Application.Services
                 }
                 else
                 {
+                    _logger.Error("User not deleted");
+
                     return BaseResponseModel<bool>.Failure(
                         ResponseMessage.UserMessage.DeletedFail
                     );
@@ -147,6 +169,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.Error("Error deleting user", ex);
                 return BaseResponseModel<bool>.Failure(
                     ResponseMessage.UserMessage.DeletedFail,
                     ex.Message
