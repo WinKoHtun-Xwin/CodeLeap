@@ -1,13 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using CodeLeap.Application.Interfaces;
 using CodeLeap.Application.DTOs.Product;
 using CodeLeap.Application.Common;
+using CodeLeap.API.Extensions;
 
 namespace CodeLeap.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductController : ControllerBase
+    [Authorize]
+    public class ProductController : BaseController
     {
         private readonly IProductService _productService;
         public ProductController(IProductService ProductService)
@@ -16,6 +19,7 @@ namespace CodeLeap.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<BaseResponseModel<IEnumerable<ProductDto>>>> GetAllProducts()
         {
             var result = await _productService.GetAllProductsAsync();
@@ -52,19 +56,16 @@ namespace CodeLeap.API.Controllers
         [HttpPost]
         public async Task<ActionResult<BaseResponseModel<ProductDto>>> CreateProduct([FromBody] CreateProductDto createProductDto)
         {
-            // ModelState validation is now handled by global ModelValidationFilter
-            var result = await _productService.CreateProductAsync(createProductDto);
+            return await _productService.CreateProductAsync(createProductDto);
 
-            if (result.Success)
-            {
-                return CreatedAtAction(
-                    nameof(GetProductById),
-                    new { id = result.Data.Id },
-                    result
-                );
-            }
+        }
 
-            return BadRequest(result);
+        [HttpGet("my-products")]
+        public async Task<ActionResult<BaseResponseModel<IEnumerable<ProductDto>>>> GetMyProducts()
+        {
+            var result = await _productService.GetAllProductsAsync();
+            
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
@@ -78,7 +79,6 @@ namespace CodeLeap.API.Controllers
                 ));
             }
 
-            // ModelState validation is now handled by global ModelValidationFilter
             var result = await _productService.UpdateProductAsync(id, updateProductDto);
 
             if (result.Success)
@@ -90,6 +90,7 @@ namespace CodeLeap.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult<BaseResponseModel<bool>>> DeleteProduct(string id)
         {
             if (string.IsNullOrEmpty(id))

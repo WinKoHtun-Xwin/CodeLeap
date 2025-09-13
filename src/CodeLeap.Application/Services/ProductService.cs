@@ -10,10 +10,13 @@ namespace CodeLeap.Application.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ProductService(IProductRepository productRepository)
+        public ProductService(IProductRepository productRepository, ICurrentUserService currentUserService)
         {
+
             _productRepository = productRepository;
+            _currentUserService = currentUserService;
         }
 
         public async Task<BaseResponseModel<IEnumerable<ProductDto>>> GetAllProductsAsync()
@@ -76,7 +79,7 @@ namespace CodeLeap.Application.Services
                     Price = createProductDto.Price,
                     Stock = createProductDto.Stock,
                     ImageUrl = createProductDto.ImageUrl,
-                    CreatedBy = createProductDto.CreatedBy,
+                    CreatedBy = _currentUserService.GetUserId(),
                 };
 
                 var createdProduct = await _productRepository.CreateProductAsync(newProduct);
@@ -113,6 +116,8 @@ namespace CodeLeap.Application.Services
                 existingProduct.Price = updateProductDto.Price;
                 existingProduct.Stock = updateProductDto.Stock;
                 existingProduct.ImageUrl = updateProductDto.ImageUrl;
+                existingProduct.UpdatedBy = _currentUserService.GetUserId();
+                existingProduct.UpdatedAt = DateTime.UtcNow;
 
                 var updatedProduct = await _productRepository.UpdateProductAsync(productId, existingProduct);
 

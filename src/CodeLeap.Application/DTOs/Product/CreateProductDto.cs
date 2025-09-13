@@ -19,8 +19,5 @@ namespace CodeLeap.Application.DTOs.Product
 
         [Url(ErrorMessage = "ImageUrl must be a valid URL")]
         public required string ImageUrl { get; set; }
-
-        [Required(ErrorMessage = "CreatedBy is required")]
-        public required string CreatedBy { get; set; }
     }
 }

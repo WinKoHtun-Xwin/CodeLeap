@@ -3,21 +3,19 @@ using CodeLeap.Application.Interfaces;
 using CodeLeap.Core.Entities;
 using CodeLeap.Core.IRepositories;
 using CodeLeap.Application.Common;
-using CodeLeap.Application.DTOs.Auth;
 
 namespace CodeLeap.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IPasswordService passwordService;
-        private readonly IJwtService jwtService;
-
-        public UserService(IUserRepository userRepository, IPasswordService passwordService, IJwtService jwtService)
+        private readonly IPasswordService _passwordService;
+        private readonly ICurrentUserService _currentUserService;
+        public UserService(IUserRepository userRepository, IPasswordService passwordService, ICurrentUserService currentUserService)
         {
             _userRepository = userRepository;
-            this.passwordService = passwordService;
-            this.jwtService = jwtService;   
+            _passwordService = passwordService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<BaseResponseModel<IEnumerable<UserDto>>> GetAllUsersAsync()
@@ -72,14 +70,13 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                createUserDto.Password = passwordService.HashPassword(createUserDto.Password);
+                createUserDto.Password = _passwordService.HashPassword(createUserDto.Password);
                 var userEntity = new UserEntity
                 {
                     Id = Guid.NewGuid().ToString(),
                     Username = createUserDto.Username,
-                    Password = createUserDto.Password, // Note: In production, hash the password
-                    CreatedBy = "",
-                    UpdatedBy = "",
+                    Password = createUserDto.Password,
+                    CreatedBy = _currentUserService.GetUserId(),
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -107,9 +104,8 @@ namespace CodeLeap.Application.Services
                 {
                     Id = userId,
                     Username = updateUserDto.Username,
-                    Password = updateUserDto.Password, // Note: In production, hash the password
-                    CreatedBy = "",
-                    UpdatedBy = "",
+                    Password = updateUserDto.Password,
+                    CreatedBy = _currentUserService.GetUserId(),
                     UpdatedAt = DateTime.UtcNow
                 };
 

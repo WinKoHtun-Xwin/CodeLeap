@@ -4,6 +4,7 @@ using CodeLeap.Infrastructure.AuthJWT;
 using CodeLeap.Infrastructure.PostgresSQL;
 using CodeLeap.Infrastructure.Security;
 using CodeLeap.Infrastructure.Repositories;
+using CodeLeap.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ namespace CodeLeap.Infrastructure
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IPasswordService, PasswordService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             return services;
         }
     }
