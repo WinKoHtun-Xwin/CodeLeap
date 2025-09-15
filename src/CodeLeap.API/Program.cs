@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace CodeLeap.API
 {
@@ -146,6 +145,28 @@ Example: 'Bearer 12345abcdef'",
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Access_Key"]!)),
                     ClockSkew = TimeSpan.Zero
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+
+                        var response = CodeLeap.Application.Common.BaseResponseModel<object>.Failure(
+                            CodeLeap.Application.Common.ResponseMessage.GeneralMessage.Unauthorized,
+                            "Authentication token is missing or invalid. Please provide a valid Bearer token in the Authorization header."
+                        );
+
+                        var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                        });
+
+                        await context.Response.WriteAsync(jsonResponse);
+                    }
                 };
             });
 
