@@ -129,7 +129,7 @@ namespace CodeLeap.API.Controllers
             {
                 return CreatedAtAction(
                     nameof(GetUserById), 
-                    new { id = result.Data.Id }, 
+                    new { id = result?.Data?.Id }, 
                     result
                 );
             }
