@@ -5,9 +5,9 @@ namespace CodeLeap.Infrastructure.Services
 {
     public class LoggerService<T> : ILoggerService<T>
     {
-        private readonly ILogger<T> _logger;
+        private readonly ILogger<LoggerService<T>> _logger;
 
-        public LoggerService(ILogger<T> logger)
+        public LoggerService(ILogger<LoggerService<T>> logger)
         {
             _logger = logger;
         }

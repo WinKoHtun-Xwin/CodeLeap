@@ -25,7 +25,7 @@ namespace CodeLeap.Infrastructure.Repositories
         public async Task<UserEntity> CreateUserAsync(UserEntity user)
         {
             user.Id = Guid.NewGuid().ToString();
-            var entityEntry = await dbContext.Set<UserEntity>().AddAsync(user);
+            await dbContext.Set<UserEntity>().AddAsync(user);
             await dbContext.SaveChangesAsync();
             return user;
         }
