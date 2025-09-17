@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.Repositories
 {
-    public class RefreshTokenRepository(PostgresSQLDbContext dbContext) : IRefreshTokenRepository
+    public class RefreshTokenRepository(PostgresSqlDbContext dbContext) : IRefreshTokenRepository
     {
         public async Task<RefreshTokenEntity> CreateRefreshTokenAsync(RefreshTokenEntity refreshToken)
         {

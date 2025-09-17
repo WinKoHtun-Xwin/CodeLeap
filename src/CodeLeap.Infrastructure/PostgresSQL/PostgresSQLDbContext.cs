@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSQLDbContext:DbContext
+    public class PostgresSqlDbContext:DbContext
     {
-        public PostgresSQLDbContext(DbContextOptions<PostgresSQLDbContext> options) : base(options)
+        public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
         {
         }
 

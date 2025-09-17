@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.Repositories
 {
-    public class UserRepository(PostgresSQLDbContext dbContext) : IUserRepository
+    public class UserRepository(PostgresSqlDbContext dbContext) : IUserRepository
     {
 
         public async Task<UserEntity?> GetByUserNameAsync(string username)

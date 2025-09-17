@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace CodeLeap.Infrastructure.Migrations
 {
-    [DbContext(typeof(PostgresSQLDbContext))]
+    [DbContext(typeof(PostgresSqlDbContext))]
     [Migration("20250913142056_Init-Postgres-Db")]
     partial class InitPostgresDb
     {
