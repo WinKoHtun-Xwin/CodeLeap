@@ -21,7 +21,7 @@ public class JwtService : IJwtService
         _refreshTokenRepository = refreshTokenRepository;
     }
 
-    public async Task<GetAuthDto> GenerateToken(string userId, string username, string role)
+    public async Task<GetAuthDto?> GenerateToken(string userId, string username, string role)
     {
         var accessKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Access_Key"]!));
         var creds = new SigningCredentials(accessKey, SecurityAlgorithms.HmacSha256);
@@ -87,22 +87,29 @@ public class JwtService : IJwtService
         }
     }
 
-    public async Task<GetAuthDto> RefreshTokenAsync(string refreshToken)
+    public async Task<GetAuthDto?> RefreshTokenAsync(string refreshToken)
     {
-        var stored = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+        try
+        {
+            var stored = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
 
-        if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
-            throw new UnauthorizedAccessException("Invalid or expired refresh token");
+            if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
+                return null;
 
-        var user = await _refreshTokenRepository.GetUserByIdAsync(stored.UserId);
-        if (user == null) throw new UnauthorizedAccessException("User not found");
+            var user = await _refreshTokenRepository.GetUserByIdAsync(stored.UserId);
+            if (user == null) return null;
 
-        // Revoke old token
-        stored.IsRevoked = true;
-        await _refreshTokenRepository.UpdateRefreshTokenAsync(stored);
+            // Revoke old token
+            stored.IsRevoked = true;
+            await _refreshTokenRepository.UpdateRefreshTokenAsync(stored);
 
-        // Generate new access + refresh pair
-        return await GenerateToken(user.Id, user.Username, "User");
+            // Generate new access + refresh pair
+            return await GenerateToken(user.Id, user.Username, "User");
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<bool> RevokeRefreshTokenAsync(string refreshToken)

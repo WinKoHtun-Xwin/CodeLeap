@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace CodeLeap.Infrastructure.Migrations
 {
-    [DbContext(typeof(PostgresSQLDbContext))]
+    [DbContext(typeof(PostgresSqlDbContext))]
     [Migration("20250913162754_Add-isDeleted-isActive-base")]
     partial class AddisDeletedisActivebase
     {

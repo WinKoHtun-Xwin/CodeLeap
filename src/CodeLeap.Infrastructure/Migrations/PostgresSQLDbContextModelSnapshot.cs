@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace CodeLeap.Infrastructure.Migrations
 {
-    [DbContext(typeof(PostgresSQLDbContext))]
-    partial class PostgresSQLDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PostgresSqlDbContext))]
+    partial class PostgresSqlDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

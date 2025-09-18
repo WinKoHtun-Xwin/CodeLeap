@@ -14,7 +14,7 @@ namespace CodeLeap.Infrastructure
     {
         public static IServiceCollection AddInfrastructureDI(this IServiceCollection services,IConfiguration configuration)
         {
-            services.AddDbContext<PostgresSQLDbContext>(Options =>
+            services.AddDbContext<PostgresSqlDbContext>(Options =>
             {
                 Options.UseNpgsql(configuration.GetConnectionString("aws_postgres_url"), 
                     b => b.MigrationsAssembly("CodeLeap.Infrastructure"));

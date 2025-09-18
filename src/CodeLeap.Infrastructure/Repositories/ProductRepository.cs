@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace CodeLeap.Infrastructure.Repositories
 {
-    public class ProductRepository(PostgresSQLDbContext dbContext) : IProductRepository
+    public class ProductRepository(PostgresSqlDbContext dbContext) : IProductRepository
     {
         public async Task<ProductEntity?> GetProductByNameAsync(string name)
         {

@@ -1,22 +1,16 @@
 ﻿using CodeLeap.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSQLDbContext:DbContext
+    public class PostgresSqlDbContext:DbContext
     {
-        public PostgresSQLDbContext(DbContextOptions<PostgresSQLDbContext> options) : base(options)
+        public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
         {
         }
 
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
-
         public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
