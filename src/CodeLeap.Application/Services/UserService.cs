@@ -201,19 +201,19 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        private static UserDto? MapToUserDto(UserEntity? userEntity)
+        private static UserDto? MapToUserDto(UserEntity? user)
         {
-            if (userEntity == null)
+            if (user == null)
                 return null;
-
+            
             return new UserDto
             {
-                Id = userEntity.Id,
-                Username = userEntity.UserName ?? string.Empty,
-                CreatedBy = userEntity.CreatedBy,
-                UpdatedBy = userEntity.UpdatedBy,
-                CreatedAt = userEntity.CreatedAt,
-                UpdatedAt = userEntity.UpdatedAt
+                Id = user.Id,
+                UserName = user.UserName!,
+                CreatedBy = user.CreatedBy,
+                UpdatedBy = user.UpdatedBy,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
             };
         }
     }

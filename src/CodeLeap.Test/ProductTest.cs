@@ -52,7 +52,7 @@ namespace CodeLeap.Test
                 }
             };
 
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetAllProductAsync()).ReturnsAsync(products);
 
             // Act
@@ -79,7 +79,7 @@ namespace CodeLeap.Test
                 CreatedBy = "user1" 
             };
 
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(product);
 
             // Act
@@ -96,7 +96,7 @@ namespace CodeLeap.Test
         public async Task TestGetProductByIdAsync_NotFound()
         {
             // Arrange
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("999")).ReturnsAsync((ProductEntity?)null);
 
             // Act
@@ -111,7 +111,7 @@ namespace CodeLeap.Test
         public async Task TestCreateProductAsync_Success()
         {
             // Arrange
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             
             productRepo.Setup(x => x.CreateProductAsync(It.IsAny<ProductEntity>()))
                       .ReturnsAsync((ProductEntity input) => input);
@@ -139,7 +139,7 @@ namespace CodeLeap.Test
         public async Task TestCreateProductAsync_RepositoryReturnsNull()
         {
             // Arrange
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.CreateProductAsync(It.IsAny<ProductEntity>()))
                       .ReturnsAsync(null as ProductEntity);
 
@@ -175,7 +175,7 @@ namespace CodeLeap.Test
                 CreatedBy = "user1" 
             };
 
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
             productRepo.Setup(x => x.UpdateProductAsync("1", It.IsAny<ProductEntity>()))
                       .ReturnsAsync((string id, ProductEntity input) => input);
@@ -203,7 +203,7 @@ namespace CodeLeap.Test
         public async Task TestUpdateProductAsync_ProductNotFound()
         {
             // Arrange
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("999")).ReturnsAsync((ProductEntity?)null);
 
             var updateProductDto = new CreateProductDto 
@@ -239,7 +239,7 @@ namespace CodeLeap.Test
                 CreatedBy = "user1" 
             };
 
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
             productRepo.Setup(x => x.UpdateProductAsync("1", It.IsAny<ProductEntity>()))
                       .ReturnsAsync(null as ProductEntity);
@@ -276,7 +276,7 @@ namespace CodeLeap.Test
                 CreatedBy = "user1" 
             };
 
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
             productRepo.Setup(x => x.DeleteProductAsync("1")).ReturnsAsync(true);
 
@@ -292,7 +292,7 @@ namespace CodeLeap.Test
         public async Task TestDeleteProductAsync_ProductNotFound()
         {
             // Arrange
-            currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
+            currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("999")).ReturnsAsync((ProductEntity?)null);
 
             // Act
