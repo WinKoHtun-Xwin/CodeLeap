@@ -8,10 +8,11 @@ namespace CodeLeap.Application
     {
         public static IServiceCollection AddApplicationDI(this IServiceCollection services)
         {
-            // Register services
+            // Application Services
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IProductService, ProductService>();
-            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IRoleService, RoleService>();  // Role management service
 
             return services;
         }

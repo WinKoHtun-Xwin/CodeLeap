@@ -80,20 +80,26 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                // Use UserManager to verify password
-                var isPasswordValid = await _userManager.CheckPasswordAsync(existingUser, loginRequest.Password);
-
-                if (isPasswordValid)
+                // Use                // Verify password
+                var isValid = await _userManager.CheckPasswordAsync(existingUser, loginRequest.Password);
+                
+                if (isValid)
                 {
                     // Get user roles
                     var roles = await _userManager.GetRolesAsync(existingUser);
-                    var role = roles.FirstOrDefault() ?? "User"; // Default to "User" if no roles assigned
+                    var rolesList = roles.ToList();
+                    
+                    // Default to "User" if no roles assigned
+                    if (!rolesList.Any())
+                    {
+                        rolesList.Add("User");
+                    }
 
-                    var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.UserName!, role);
+                    var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.UserName!, rolesList);
                     
                     if (getAuthDto == null)
                     {
-                        _logger.Error("Failed to generate token for user : {username}", loginRequest.Username);
+                        _logger.Error("Failed to generate token for user By User : {username}", loginRequest.Username);
                         return BaseResponseModel<GetAuthDto>.Failure(
                             ResponseMessage.LoginMessage.TokenGenerationFailed
                         );
@@ -164,10 +170,30 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                // Assign default role
-                await _userManager.AddToRoleAsync(newUser, "User");
+                // Assign roles (default to "User" if not specified)
+                var rolesToAssign = registerNewUserDto.Roles?.Any() == true 
+                    ? registerNewUserDto.Roles 
+                    : new List<string> { "User" };
 
-                _logger.Info("User created successfully By User : {username}", registerNewUserDto.Username);
+                foreach (var role in rolesToAssign)
+                {
+                    // Check if role exists
+                    var roleExists = await _userManager.GetUsersInRoleAsync(role);
+                    if (roleExists == null)
+                    {
+                        _logger.Error("Role does not exist: {role}", role);
+                        // Continue assigning other roles instead of failing the entire registration
+                        continue;
+                    }
+
+                    var roleResult = await _userManager.AddToRoleAsync(newUser, role);
+                    if (!roleResult.Succeeded)
+                    {
+                        _logger.Error("Failed to assign role {role} to user {username}", role, registerNewUserDto.Username);
+                    }
+                }
+
+                _logger.Info("User created successfully By User : {username}",  registerNewUserDto.Username);
 
                 return BaseResponseModel<bool>.SuccessResponse(
                     true,

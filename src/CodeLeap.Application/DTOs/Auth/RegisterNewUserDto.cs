@@ -11,6 +11,13 @@ namespace CodeLeap.Application.DTOs.Auth
     {
         [Required(ErrorMessage = "UserName is required")]
         public required string Username { get; set; }
+        
+        [Required(ErrorMessage = "Password is required")]
         public required string Password { get; set; }
+        
+        /// <summary>
+        /// Optional roles to assign to user. Defaults to ["User"] if not provided.
+        /// </summary>
+        public List<string>? Roles { get; set; }
     }
 }
