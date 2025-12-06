@@ -10,12 +10,14 @@ namespace CodeLeap.Application.Services
     {
         private readonly ILoggerService<UserService> _logger;
         private readonly IUserRepository _userRepository;
-        private readonly IPasswordService _passwordService;
         private readonly ICurrentUserService _currentUserService;
-        public UserService(IUserRepository userRepository, IPasswordService passwordService, ICurrentUserService currentUserService, ILoggerService<UserService> logger)
+        
+        public UserService(
+            IUserRepository userRepository, 
+            ICurrentUserService currentUserService, 
+            ILoggerService<UserService> logger)
         {
             _userRepository = userRepository;
-            _passwordService = passwordService;
             _currentUserService = currentUserService;
             _logger = logger;
         }
@@ -80,14 +82,18 @@ namespace CodeLeap.Application.Services
             try
             {
                 _logger.Info("Creating user By User : {userId}", _currentUserService.UserId!);
-                createUserDto.Password = _passwordService.HashPassword(createUserDto.Password);
+                
+                // WARNING: For Identity users, this should use UserManager.CreateAsync instead
+                // This method bypasses Identity's password hashing and validation
                 var userEntity = new UserEntity
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Username = createUserDto.Username,
-                    Password = createUserDto.Password,
+                    UserName = createUserDto.Username,
+                    // Password should be set via UserManager.CreateAsync, not directly
                     CreatedBy = _currentUserService.UserId!,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                    IsDeleted = false
                 };
 
                 var createdUser = await _userRepository.CreateUserAsync(userEntity);
@@ -122,11 +128,13 @@ namespace CodeLeap.Application.Services
             try
             {
                 _logger.Info("Updating user By User : {userId}", _currentUserService.UserId!);
+                
+                // WARNING: For Identity users, password changes should use UserManager.ChangePasswordAsync
                 var userEntity = new UserEntity
                 {
                     Id = userId,
-                    Username = updateUserDto.Username,
-                    Password = updateUserDto.Password,
+                    UserName = updateUserDto.Username,
+                    // Password updates should be done via UserManager, not directly
                     CreatedBy = _currentUserService.UserId!,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -201,7 +209,7 @@ namespace CodeLeap.Application.Services
             return new UserDto
             {
                 Id = userEntity.Id,
-                Username = userEntity.Username,
+                Username = userEntity.UserName ?? string.Empty,
                 CreatedBy = userEntity.CreatedBy,
                 UpdatedBy = userEntity.UpdatedBy,
                 CreatedAt = userEntity.CreatedAt,

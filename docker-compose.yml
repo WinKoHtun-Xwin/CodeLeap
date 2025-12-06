@@ -1,0 +1,30 @@
+services:
+  # ASP.NET Core API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codeleap-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      # AWS RDS PostgreSQL Connection
+      - ConnectionStrings__aws_postgres_url=HOST=stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com;Port=5432;Database=codeleap_postgres_test;Username=stockposadmin;Password=_?S%[vPsk7eo
+      # JWT Configuration
+      - Jwt__Access_Key=f83abf3e-0b9a-4a0f-95ce-61eb3d528f8f
+      - Jwt__Refresh_Key=d4c1f8e2-3b6a-4e2e-9f3a-2c5e6b7a8c9d
+      - Jwt__Issuer=CodeLeap
+      - Jwt__Audience=CodeLeapUsers
+      - Jwt__AccessTokenExpiryMinutes=15
+      - Jwt__RefreshTokenExpiryDays=7
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/swagger/index.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

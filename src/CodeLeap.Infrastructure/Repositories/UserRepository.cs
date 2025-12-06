@@ -10,8 +10,10 @@ namespace CodeLeap.Infrastructure.Repositories
 
         public async Task<UserEntity?> GetByUserNameAsync(string username)
         {
-            return await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Username == username.Trim());
+            // Identity uses UserName property instead of Username
+            return await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.UserName == username.Trim());
         }
+        
         public async Task<IEnumerable<UserEntity>> GetAllUsersAsync()
         {
             return await dbContext.Set<UserEntity>().ToListAsync();
@@ -24,6 +26,8 @@ namespace CodeLeap.Infrastructure.Repositories
 
         public async Task<UserEntity> CreateUserAsync(UserEntity user)
         {
+            // NOTE: For Identity users, prefer using UserManager.CreateAsync instead
+            // This method is kept for compatibility
             user.Id = Guid.NewGuid().ToString();
             await dbContext.Set<UserEntity>().AddAsync(user);
             await dbContext.SaveChangesAsync();
@@ -38,7 +42,8 @@ namespace CodeLeap.Infrastructure.Repositories
                 throw new KeyNotFoundException("User not found");
             }
 
-            existUser.Username = user.Username;
+            // Update Identity UserName property
+            existUser.UserName = user.UserName;
             existUser.UpdatedAt = DateTime.UtcNow;
 
             await dbContext.SaveChangesAsync();

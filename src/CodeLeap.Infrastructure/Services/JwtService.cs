@@ -104,7 +104,7 @@ public class JwtService : IJwtService
             await _refreshTokenRepository.UpdateRefreshTokenAsync(stored);
 
             // Generate new access + refresh pair
-            return await GenerateToken(user.Id, user.Username, "User");
+            return await GenerateToken(user.Id, user.UserName!, "User");
         }
         catch
         {

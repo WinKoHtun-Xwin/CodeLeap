@@ -3,6 +3,7 @@ using System;
 using CodeLeap.Infrastructure.PostgresSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CodeLeap.Infrastructure.Migrations
 {
     [DbContext(typeof(PostgresSqlDbContext))]
-    partial class PostgresSqlDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251206105005_IntegrateAspNetCoreIdentity")]
+    partial class IntegrateAspNetCoreIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

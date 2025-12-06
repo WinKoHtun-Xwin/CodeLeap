@@ -1,38 +1,40 @@
 ﻿using CodeLeap.Core.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSqlDbContext:DbContext
+    public class PostgresSqlDbContext : IdentityDbContext<UserEntity>
     {
         public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
         {
         }
 
-        public DbSet<UserEntity> Users { get; set; }
+        // Users DbSet is inherited from IdentityDbContext
         public DbSet<ProductEntity> Products { get; set; }
         public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // IMPORTANT: Call base first for Identity configuration
             base.OnModelCreating(modelBuilder);
 
+            // Custom configuration for UserEntity (beyond Identity defaults)
             modelBuilder.Entity<UserEntity>(entity =>
             {
-                entity.ToTable("Users");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
+                // Identity already configures the primary key (Id) and core properties
+                // We only need to configure our custom properties
+                entity.Property(e => e.CreatedBy)
                     .IsRequired();
 
-                entity.Property(e => e.Username)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
 
-                entity.Property(e => e.Password)
-                    .IsRequired()
-                    .HasMaxLength(500);
+                entity.Property(e => e.IsDeleted)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.IsActive)
+                    .HasDefaultValue(true);
             });
 
             modelBuilder.Entity<ProductEntity>(entity => {

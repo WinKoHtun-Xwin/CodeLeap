@@ -20,6 +20,8 @@ namespace CodeLeap.Infrastructure
                     b => b.MigrationsAssembly("CodeLeap.Infrastructure"));
             });
 
+            // Note: Identity services are configured in Program.cs
+
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -27,7 +29,8 @@ namespace CodeLeap.Infrastructure
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             
-            services.AddTransient<IPasswordService, PasswordService>();
+            // IPasswordService is no longer needed - Identity UserManager handles password hashing
+            // services.AddTransient<IPasswordService, PasswordService>(); // REMOVED
             
             services.AddSingleton(typeof(ILoggerService<>), typeof(LoggerService<>));
             

@@ -6,12 +6,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Identity;
+using CodeLeap.Core.Entities;
+using CodeLeap.Infrastructure.Services;
+using CodeLeap.Infrastructure.PostgresSQL;
+using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.API
 {
-    public static class Program
+    public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -127,6 +132,7 @@ Example: 'Bearer 12345abcdef'",
                 c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             });
 
+            // JWT Authentication (Identity is configured in Infrastructure DI)
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -189,6 +195,36 @@ Example: 'Bearer 12345abcdef'",
             // Add HttpContextAccessor
             builder.Services.AddHttpContextAccessor();
 
+            // Configure Identity (using AddIdentityCore for API - no cookies)
+            builder.Services.AddIdentityCore<UserEntity>(options =>
+            {
+                // Password settings
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequiredUniqueChars = 1;
+
+                // Lockout settings
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+
+                // User settings
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                options.User.RequireUniqueEmail = false;
+
+                // SignIn settings (for API, we don't need email confirmation)
+                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<PostgresSqlDbContext>()
+            .AddDefaultTokenProviders();
+
+            // No need for ConfigureApplicationCookie with AddIdentityCore (no cookies are added)
+
             builder.Services.AddApiDI(builder.Configuration);
 
             // Add logging (built-in)
@@ -197,6 +233,34 @@ Example: 'Bearer 12345abcdef'",
             builder.Logging.AddDebug();
 
             var app = builder.Build();
+
+            // Automatically apply pending migrations on startup
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                
+                try
+                {
+                    // Apply database migrations
+                    logger.LogInformation("Applying database migrations...");
+                    var dbContext = services.GetRequiredService<PostgresSqlDbContext>();
+                    await dbContext.Database.MigrateAsync();
+                    logger.LogInformation("Database migrations applied successfully.");
+                    
+                    // Initialize roles
+                    logger.LogInformation("Initializing roles...");
+                    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                    var userManager = services.GetRequiredService<UserManager<UserEntity>>();
+                    await RoleInitializer.InitializeRolesAsync(roleManager, userManager);
+                    logger.LogInformation("Roles initialized successfully.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+                    // Optionally: throw; to prevent app from starting if migration fails
+                }
+            }
 
             if (app.Environment.IsDevelopment())
             {

@@ -4,26 +4,22 @@ using CodeLeap.Application.DTOs.User;
 using CodeLeap.Application.Interfaces;
 using CodeLeap.Core.Entities;
 using CodeLeap.Core.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace CodeLeap.Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IPasswordService _passwordService;
+        private readonly UserManager<UserEntity> _userManager;
         private readonly IJwtService _jwtService;
-
         private readonly ILoggerService<AuthService> _logger;
 
-        public AuthService(IUserRepository userRepository, IPasswordService passwordService, IJwtService jwtService, ILoggerService<AuthService> logger)
+        public AuthService(
+            UserManager<UserEntity> userManager,
+            IJwtService jwtService,
+            ILoggerService<AuthService> logger)
         {
-            _userRepository = userRepository;
-            _passwordService = passwordService;
+            _userManager = userManager;
             _jwtService = jwtService;
             _logger = logger;
         }
@@ -72,7 +68,9 @@ namespace CodeLeap.Application.Services
             try
             {
                 _logger.Info("Logging in user By User : {username}", loginRequest.Username);
-                var existingUser = await _userRepository.GetByUserNameAsync(loginRequest.Username);
+                
+                // Use UserManager to find user by username
+                var existingUser = await _userManager.FindByNameAsync(loginRequest.Username);
 
                 if (existingUser == null)
                 {
@@ -82,9 +80,16 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                if (_passwordService.VerifyPassword(existingUser.Password, loginRequest.Password))
+                // Use UserManager to verify password
+                var isPasswordValid = await _userManager.CheckPasswordAsync(existingUser, loginRequest.Password);
+
+                if (isPasswordValid)
                 {
-                    var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.Username, "User");
+                    // Get user roles
+                    var roles = await _userManager.GetRolesAsync(existingUser);
+                    var role = roles.FirstOrDefault() ?? "User"; // Default to "User" if no roles assigned
+
+                    var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.UserName!, role);
                     
                     if (getAuthDto == null)
                     {
@@ -100,6 +105,7 @@ namespace CodeLeap.Application.Services
                         ResponseMessage.LoginMessage.Success
                     );
                 }
+                
                 _logger.Error("Invalid credentials By User : {username}", loginRequest.Username);
                 return BaseResponseModel<GetAuthDto>.Failure(
                     ResponseMessage.LoginMessage.InvalidCredentials
@@ -115,12 +121,14 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        public async Task<BaseResponseModel<bool>> RegisterNewUser (RegisterNewUserDto registerNewUserDto)
+        public async Task<BaseResponseModel<bool>> RegisterNewUser(RegisterNewUserDto registerNewUserDto)
         {
             try
             {
                 _logger.Info("Registering new user By User : {username}", registerNewUserDto.Username);
-                var existingUser = await _userRepository.GetByUserNameAsync(registerNewUserDto.Username.Trim());
+                
+                // Check if user already exists
+                var existingUser = await _userManager.FindByNameAsync(registerNewUserDto.Username.Trim());
 
                 if (existingUser != null)
                 {
@@ -130,26 +138,34 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                var hashedPassword = _passwordService.HashPassword(registerNewUserDto.Password.Trim());
-                var UserID = Guid.NewGuid().ToString();
-                UserEntity createUser = new UserEntity
+                // Create new user entity
+                var userId = Guid.NewGuid().ToString();
+                var newUser = new UserEntity
                 {
-                    Id = UserID,
-                    Username = registerNewUserDto.Username.Trim(),
-                    Password = hashedPassword,
+                    Id = userId,
+                    UserName = registerNewUserDto.Username.Trim(),
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = UserID
+                    CreatedBy = userId,
+                    IsActive = true,
+                    IsDeleted = false
                 };
 
-                var result = await _userRepository.CreateUserAsync(createUser);
+                // Use UserManager to create user with password (handles hashing automatically)
+                var result = await _userManager.CreateAsync(newUser, registerNewUserDto.Password.Trim());
 
-                if (result == null)
+                if (!result.Succeeded)
                 {
-                    _logger.Error("User creation failed By User : {username}", registerNewUserDto.Username);
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    _logger.Error("User creation failed By User : {username}. Errors: {errors}", 
+                        registerNewUserDto.Username, errors);
                     return BaseResponseModel<bool>.Failure(
-                        ResponseMessage.RegisterNewUserMessage.RegistrationFailed
+                        ResponseMessage.RegisterNewUserMessage.RegistrationFailed,
+                        errors
                     );
                 }
+
+                // Assign default role
+                await _userManager.AddToRoleAsync(newUser, "User");
 
                 _logger.Info("User created successfully By User : {username}", registerNewUserDto.Username);
 
