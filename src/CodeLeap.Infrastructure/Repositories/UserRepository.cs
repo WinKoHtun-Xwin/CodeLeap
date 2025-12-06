@@ -13,7 +13,7 @@ namespace CodeLeap.Infrastructure.Repositories
             // Identity uses UserName property instead of Username
             return await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.UserName == username.Trim());
         }
-        
+
         public async Task<IEnumerable<UserEntity>> GetAllUsersAsync()
         {
             return await dbContext.Set<UserEntity>().ToListAsync();
@@ -36,11 +36,8 @@ namespace CodeLeap.Infrastructure.Repositories
 
         public async Task<UserEntity> UpdateUserAsync(string userId, UserEntity user)
         {
-            var existUser = await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Id == userId);
-            if (existUser == null)
-            {
-                throw new KeyNotFoundException("User not found");
-            }
+            var existUser = await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Id == userId)
+                ?? throw new KeyNotFoundException("User not found");
 
             // Update Identity UserName property
             existUser.UserName = user.UserName;
@@ -53,11 +50,8 @@ namespace CodeLeap.Infrastructure.Repositories
 
         public async Task<bool> DeleteUserAsync(string id)
         {
-            var existUser = await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Id == id);
-            if (existUser == null)
-            {
-                throw new KeyNotFoundException("User not found");
-            }
+            var existUser = await dbContext.Set<UserEntity>().FirstOrDefaultAsync(x => x.Id == id)
+                ?? throw new KeyNotFoundException("User not found");
 
             dbContext.Set<UserEntity>().Remove(existUser);
             return await dbContext.SaveChangesAsync() > 0;

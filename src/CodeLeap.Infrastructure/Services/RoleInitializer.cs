@@ -5,9 +5,9 @@ namespace CodeLeap.Infrastructure.Services
 {
     public static class RoleInitializer
     {
-        public static async Task InitializeRolesAsync(RoleManager<IdentityRole> roleManager, UserManager<UserEntity> userManager)
+        public static async Task InitializeRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roleNames = { "Admin", "User" };
+            string[] roleNames = ["Admin", "User"];
 
             foreach (var roleName in roleNames)
             {

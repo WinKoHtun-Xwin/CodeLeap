@@ -41,7 +41,7 @@ namespace CodeLeap.Application.Services
                 }
 
                 var result = await _roleManager.CreateAsync(new IdentityRole(roleName));
-                
+
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -76,7 +76,7 @@ namespace CodeLeap.Application.Services
                 }
 
                 var result = await _roleManager.DeleteAsync(role);
-                
+
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -97,7 +97,7 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        public async Task<BaseResponseModel<IEnumerable<string>>> GetAllRolesAsync()
+        public Task<BaseResponseModel<IEnumerable<string>>> GetAllRolesAsync()
         {
             try
             {
@@ -106,15 +106,15 @@ namespace CodeLeap.Application.Services
                 var roles = _roleManager.Roles.Select(r => r.Name).Where(n => n != null).Cast<string>().ToList();
 
                 _logger.Info("Retrieved {count} roles", roles.Count);
-                return BaseResponseModel<IEnumerable<string>>.SuccessResponse(roles, "Roles retrieved successfully");
+                return Task.FromResult(BaseResponseModel<IEnumerable<string>>.SuccessResponse(roles, "Roles retrieved successfully"));
             }
             catch (Exception ex)
             {
                 _logger.Error("Error getting all roles", ex);
-                return BaseResponseModel<IEnumerable<string>>.Failure(
+                return Task.FromResult(BaseResponseModel<IEnumerable<string>>.Failure(
                     ResponseMessage.GeneralMessage.InternalServerError,
                     ex.Message
-                );
+                ));
             }
         }
 
@@ -156,7 +156,7 @@ namespace CodeLeap.Application.Services
 
                 // Add new roles
                 var addResult = await _userManager.AddToRolesAsync(user, roles);
-                
+
                 if (!addResult.Succeeded)
                 {
                     var errors = string.Join(", ", addResult.Errors.Select(e => e.Description));
@@ -191,7 +191,7 @@ namespace CodeLeap.Application.Services
                 }
 
                 var result = await _userManager.RemoveFromRolesAsync(user, roles);
-                
+
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));

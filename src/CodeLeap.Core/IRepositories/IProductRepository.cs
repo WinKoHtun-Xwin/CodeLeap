@@ -1,9 +1,4 @@
 ﻿using CodeLeap.Core.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeLeap.Core.IRepositories
 {
@@ -16,9 +11,9 @@ namespace CodeLeap.Core.IRepositories
 
         Task<ProductEntity?> GetProductByIdAsync(string id);
 
-        Task<ProductEntity> CreateProductAsync(ProductEntity Product);
+        Task<ProductEntity?> CreateProductAsync(ProductEntity Product);
 
-        Task<ProductEntity> UpdateProductAsync(string ProductId, ProductEntity Product);
+        Task<ProductEntity?> UpdateProductAsync(string ProductId, ProductEntity Product);
 
         Task<Boolean> DeleteProductAsync(string id);
     }

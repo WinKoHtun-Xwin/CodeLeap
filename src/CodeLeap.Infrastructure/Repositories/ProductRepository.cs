@@ -10,7 +10,7 @@ namespace CodeLeap.Infrastructure.Repositories
     {
         public async Task<ProductEntity?> GetProductByNameAsync(string name)
         {
-            return await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Name.ToLower() == name.ToLower() && !x.IsDeleted);
+            return await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && !x.IsDeleted);
         }
 
         public async Task<int> GetTotalItemsAsync()
@@ -18,13 +18,13 @@ namespace CodeLeap.Infrastructure.Repositories
             return await dbContext.Set<ProductEntity>().Where(x => !x.IsDeleted).CountAsync();
         }
 
-        public async Task<IEnumerable<ProductEntity>> GetProductsByPaginationAsync(int pageNumber, int pageSize,string search)
+        public async Task<IEnumerable<ProductEntity>> GetProductsByPaginationAsync(int pageNumber, int pageSize, string search)
         {
             var baseQuery = dbContext.Set<ProductEntity>().AsQueryable();
             if (!string.IsNullOrEmpty(search.Trim()))
             {
-                baseQuery = baseQuery.Where(x => x.Name.ToLower().Contains(search.Trim().ToLower()));
-            }   
+                baseQuery = baseQuery.Where(x => x.Name.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
             return await baseQuery
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -41,21 +41,17 @@ namespace CodeLeap.Infrastructure.Repositories
             return await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 
-        public async Task<ProductEntity> CreateProductAsync(ProductEntity Product)
+        public async Task<ProductEntity?> CreateProductAsync(ProductEntity Product)
         {
-            Product.Id = Guid.NewGuid().ToString();
             await dbContext.Set<ProductEntity>().AddAsync(Product);
             await dbContext.SaveChangesAsync();
             return Product;
         }
 
-        public async Task<ProductEntity> UpdateProductAsync(string ProductId, ProductEntity Product)
+        public async Task<ProductEntity?> UpdateProductAsync(string ProductId, ProductEntity Product)
         {
-            var existProduct = await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Id == ProductId && !x.IsDeleted);
-            if (existProduct == null)
-            {
-                throw new KeyNotFoundException("Product not found");
-            }
+            var existProduct = await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Id == ProductId && !x.IsDeleted)
+                ?? throw new KeyNotFoundException("Product not found");
 
             existProduct.Name = Product.Name;
             existProduct.Price = Product.Price;
@@ -68,11 +64,8 @@ namespace CodeLeap.Infrastructure.Repositories
 
         public async Task<bool> DeleteProductAsync(string id)
         {
-            var existProduct = await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
-            if (existProduct == null)
-            {
-                throw new KeyNotFoundException("Product not found");
-            }
+            var existProduct = await dbContext.Set<ProductEntity>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted)
+                ?? throw new KeyNotFoundException("Product not found");
 
             existProduct.IsDeleted = true;
             existProduct.UpdatedAt = DateTime.UtcNow;

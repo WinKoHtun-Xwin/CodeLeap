@@ -4,15 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSqlDbContext : IdentityDbContext<UserEntity>
+    public class PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : IdentityDbContext<UserEntity>(options)
     {
-        public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
-        {
-        }
-
         // Users DbSet is inherited from IdentityDbContext
-        public DbSet<ProductEntity> Products { get; set; }
-        public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
+        public DbSet<ProductEntity> Products { get; set; } = null!;
+        public DbSet<RefreshTokenEntity> RefreshTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,7 +33,8 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                     .HasDefaultValue(true);
             });
 
-            modelBuilder.Entity<ProductEntity>(entity => {
+            modelBuilder.Entity<ProductEntity>(entity =>
+            {
                 entity.ToTable("Products");
 
                 entity.HasKey(e => e.Id);
@@ -72,7 +69,7 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                      .HasForeignKey(p => p.CreatedBy)           // FK in Product
                      .HasPrincipalKey(u => u.Id)                // PK in User
                      .OnDelete(DeleteBehavior.Restrict);        // Prevent cascade delete
-             });
+            });
 
             modelBuilder.Entity<RefreshTokenEntity>(entity =>
             {

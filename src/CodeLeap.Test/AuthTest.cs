@@ -13,18 +13,19 @@ namespace CodeLeap.Test
         private readonly Mock<IJwtService> jwtService;
         private readonly Mock<ILoggerService<AuthService>> logger;
         private readonly AuthService authService;
-        
+
         public AuthTest()
         {
             // Mock UserManager (complex setup required)
             var userStoreMock = new Mock<IUserStore<UserEntity>>();
             userManager = new Mock<UserManager<UserEntity>>(
                 userStoreMock.Object,
-                null, null, null, null, null, null, null, null);
-            
+                null!, null!, null!, null!, null!, null!, null!, null!);
+
             jwtService = new Mock<IJwtService>();
             logger = new Mock<ILoggerService<AuthService>>();
-            authService = new AuthService(userManager.Object, jwtService.Object, logger.Object);
+            var refreshTokenRepository = new Mock<CodeLeap.Core.IRepositories.IRefreshTokenRepository>();
+            authService = new AuthService(userManager.Object, jwtService.Object, logger.Object, refreshTokenRepository.Object);
         }
 
         #region RefreshTokenAsync Tests
@@ -38,6 +39,8 @@ namespace CodeLeap.Test
             {
                 AccessToken = "new-access-token",
                 RefreshToken = "new-refresh-token",
+                UserId = "user-id",
+                Username = "testuser",
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
             };
 
@@ -86,7 +89,7 @@ namespace CodeLeap.Test
 
             // Assert
             Assert.False(result.Success);
-            Assert.Equal("Invalid username or password", result.Message);
+            Assert.Equal("Invalid or expired refresh token. Please login again.", result.Message);
         }
 
         [Fact]
@@ -115,7 +118,7 @@ namespace CodeLeap.Test
             // Arrange
             var loginRequest = new LoginRequest
             {
-                Username = "testuser",
+                EmailOrUsername = "testuser",
                 Password = "password123"
             };
 
@@ -131,13 +134,15 @@ namespace CodeLeap.Test
             {
                 AccessToken = "access-token",
                 RefreshToken = "refresh-token",
+                UserId = "user-id",
+                Username = "testuser",
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
             };
 
             userManager.Setup(x => x.FindByNameAsync("testuser")).ReturnsAsync(user);
             userManager.Setup(x => x.CheckPasswordAsync(user, "password123")).ReturnsAsync(true);
-            userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
-            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ReturnsAsync(authDto);
+            userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(["User"]);
+            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", It.IsAny<List<string>>())).ReturnsAsync(authDto);
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -154,11 +159,12 @@ namespace CodeLeap.Test
             // Arrange
             var loginRequest = new LoginRequest
             {
-                Username = "nonexistent",
+                EmailOrUsername = "nonexistent",
                 Password = "password123"
             };
 
             userManager.Setup(x => x.FindByNameAsync("nonexistent")).ReturnsAsync((UserEntity?)null);
+            userManager.Setup(x => x.FindByEmailAsync("nonexistent")).ReturnsAsync((UserEntity?)null);
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -174,7 +180,7 @@ namespace CodeLeap.Test
             // Arrange
             var loginRequest = new LoginRequest
             {
-                Username = "testuser",
+                EmailOrUsername = "testuser",
                 Password = "wrongpassword"
             };
 
@@ -203,7 +209,7 @@ namespace CodeLeap.Test
             // Arrange
             var loginRequest = new LoginRequest
             {
-                Username = "testuser",
+                EmailOrUsername = "testuser",
                 Password = "password123"
             };
 
@@ -217,8 +223,8 @@ namespace CodeLeap.Test
 
             userManager.Setup(x => x.FindByNameAsync("testuser")).ReturnsAsync(user);
             userManager.Setup(x => x.CheckPasswordAsync(user, "password123")).ReturnsAsync(true);
-            userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
-            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", "User")).ReturnsAsync((GetAuthDto?)null);
+            userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(["User"]);
+            jwtService.Setup(x => x.GenerateToken("user-id", "testuser", It.IsAny<List<string>>())).ReturnsAsync((GetAuthDto?)null);
 
             // Act
             var result = await authService.LoginUser(loginRequest);
@@ -234,7 +240,7 @@ namespace CodeLeap.Test
             // Arrange
             var loginRequest = new LoginRequest
             {
-                Username = "testuser",
+                EmailOrUsername = "testuser",
                 Password = "password123"
             };
 
@@ -260,10 +266,12 @@ namespace CodeLeap.Test
             var registerDto = new RegisterNewUserDto
             {
                 Username = "newuser",
+                Email = "newuser@test.com",
                 Password = "password123"
             };
 
             userManager.Setup(x => x.FindByNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
+            userManager.Setup(x => x.FindByEmailAsync("newuser@test.com")).ReturnsAsync((UserEntity?)null);
             userManager.Setup(x => x.CreateAsync(It.IsAny<UserEntity>(), "password123"))
                 .ReturnsAsync(IdentityResult.Success);
             userManager.Setup(x => x.AddToRoleAsync(It.IsAny<UserEntity>(), "User"))
@@ -285,6 +293,7 @@ namespace CodeLeap.Test
             var registerDto = new RegisterNewUserDto
             {
                 Username = "existinguser",
+                Email = "existing@test.com",
                 Password = "password123"
             };
 
@@ -313,6 +322,7 @@ namespace CodeLeap.Test
             var registerDto = new RegisterNewUserDto
             {
                 Username = "newuser",
+                Email = "newuser@test.com",
                 Password = "password123"
             };
 
@@ -320,6 +330,7 @@ namespace CodeLeap.Test
             var failureResult = IdentityResult.Failed(identityError);
 
             userManager.Setup(x => x.FindByNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
+            userManager.Setup(x => x.FindByEmailAsync("newuser@test.com")).ReturnsAsync((UserEntity?)null);
             userManager.Setup(x => x.CreateAsync(It.IsAny<UserEntity>(), "password123"))
                 .ReturnsAsync(failureResult);
 
@@ -338,10 +349,12 @@ namespace CodeLeap.Test
             var registerDto = new RegisterNewUserDto
             {
                 Username = "  newuser  ",
+                Email = "newuser@test.com",
                 Password = "  password123  "
             };
 
             userManager.Setup(x => x.FindByNameAsync("newuser")).ReturnsAsync((UserEntity?)null);
+            userManager.Setup(x => x.FindByEmailAsync("newuser@test.com")).ReturnsAsync((UserEntity?)null);
             userManager.Setup(x => x.CreateAsync(It.IsAny<UserEntity>(), "password123"))
                 .ReturnsAsync(IdentityResult.Success);
             userManager.Setup(x => x.AddToRoleAsync(It.IsAny<UserEntity>(), "User"))
@@ -353,7 +366,7 @@ namespace CodeLeap.Test
             // Assert
             Assert.True(result.Success);
             Assert.Equal("User registered successfully", result.Message);
-            
+
             // Verify that username was trimmed
             userManager.Verify(x => x.FindByNameAsync("newuser"), Times.Once);
         }
@@ -365,6 +378,7 @@ namespace CodeLeap.Test
             var registerDto = new RegisterNewUserDto
             {
                 Username = "newuser",
+                Email = "newuser@test.com",
                 Password = "password123"
             };
 

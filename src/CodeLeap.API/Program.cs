@@ -11,11 +11,14 @@ using CodeLeap.Core.Entities;
 using CodeLeap.Infrastructure.Services;
 using CodeLeap.Infrastructure.PostgresSQL;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CodeLeap.API
 {
     public class Program
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -35,10 +38,10 @@ namespace CodeLeap.API
             builder.Services.AddSwaggerGen(c =>
             {
                 const string bearerScheme = "Bearer";
-                
-                c.SwaggerDoc("v1", new OpenApiInfo 
-                { 
-                    Title = "CodeLeap API", 
+
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "CodeLeap API",
                     Version = "v1.0.0",
                     Description = @"
                     # CodeLeap API Documentation
@@ -127,7 +130,7 @@ Example: 'Bearer 12345abcdef'",
                 // Add operation filters for better documentation
                 c.EnableAnnotations();
                 c.DescribeAllParametersInCamelCase();
-                
+
                 // Add examples for common responses
                 c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             });
@@ -166,31 +169,23 @@ Example: 'Bearer 12345abcdef'",
                             "Authentication token is missing or invalid. Please provide a valid Bearer token in the Authorization header."
                         );
 
-                        var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                        });
+                        var jsonResponse = JsonSerializer.Serialize(response, _jsonOptions);
 
                         await context.Response.WriteAsync(jsonResponse);
                     }
                 };
             });
 
-            builder.Services.AddAuthorization(options =>
-            {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            builder.Services.AddAuthorizationBuilder()
+                .SetFallbackPolicy(new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
-                    .Build();
-
-                options.AddPolicy("AdminOnly", policy => 
-                    policy.RequireRole("Admin"));
-                
-                options.AddPolicy("UserOrAdmin", policy => 
-                    policy.RequireRole("User", "Admin"));
-                
-                options.AddPolicy("AuthenticatedUser", policy => 
+                    .Build())
+                .AddPolicy("AdminOnly", policy =>
+                    policy.RequireRole("Admin"))
+                .AddPolicy("UserOrAdmin", policy =>
+                    policy.RequireRole("User", "Admin"))
+                .AddPolicy("AuthenticatedUser", policy =>
                     policy.RequireAuthenticatedUser());
-            });
 
             // Add HttpContextAccessor
             builder.Services.AddHttpContextAccessor();
@@ -213,7 +208,7 @@ Example: 'Bearer 12345abcdef'",
 
                 // User settings
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-                options.User.RequireUniqueEmail = false;
+                options.User.RequireUniqueEmail = true;
 
                 // SignIn settings (for API, we don't need email confirmation)
                 options.SignIn.RequireConfirmedEmail = false;
@@ -239,7 +234,7 @@ Example: 'Bearer 12345abcdef'",
             {
                 var services = scope.ServiceProvider;
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                
+
                 try
                 {
                     // Apply database migrations
@@ -247,7 +242,7 @@ Example: 'Bearer 12345abcdef'",
                     var dbContext = services.GetRequiredService<PostgresSqlDbContext>();
                     await dbContext.Database.MigrateAsync();
                     logger.LogInformation("Database migrations applied successfully.");
-                    
+
                     // Initialize roles
                     logger.LogInformation("Initializing roles...");
                     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();

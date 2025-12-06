@@ -11,10 +11,10 @@ namespace CodeLeap.Application.Services
         private readonly ILoggerService<UserService> _logger;
         private readonly IUserRepository _userRepository;
         private readonly ICurrentUserService _currentUserService;
-        
+
         public UserService(
-            IUserRepository userRepository, 
-            ICurrentUserService currentUserService, 
+            IUserRepository userRepository,
+            ICurrentUserService currentUserService,
             ILoggerService<UserService> logger)
         {
             _userRepository = userRepository;
@@ -29,9 +29,9 @@ namespace CodeLeap.Application.Services
                 _logger.Info("Getting all users By User : {userId}", _currentUserService.UserId!);
                 var users = await _userRepository.GetAllUsersAsync();
                 var userDtos = users.Select(MapToUserDto).Where(dto => dto != null).Cast<UserDto>();
-                
+
                 return BaseResponseModel<IEnumerable<UserDto>>.SuccessResponse(
-                    userDtos, 
+                    userDtos,
                     ResponseMessage.UserMessage.GetAllSuccess
                 );
             }
@@ -51,7 +51,7 @@ namespace CodeLeap.Application.Services
             {
                 _logger.Info("Getting user by id : {id} By User : {userId}", id, _currentUserService.UserId!);
                 var user = await _userRepository.GetUserByIdAsync(id);
-                
+
                 if (user == null)
                 {
                     _logger.Error("User not found : {id} By User : {userId}", id, _currentUserService.UserId!);
@@ -63,7 +63,7 @@ namespace CodeLeap.Application.Services
                 _logger.Info("User found : {id} By User : {userId}", id, _currentUserService.UserId!);
 
                 return BaseResponseModel<UserDto>.SuccessResponse(
-                    MapToUserDto(user),
+                    MapToUserDto(user)!,
                     ResponseMessage.UserMessage.GetSuccess
                 );
             }
@@ -82,7 +82,7 @@ namespace CodeLeap.Application.Services
             try
             {
                 _logger.Info("Creating user By User : {userId}", _currentUserService.UserId!);
-                
+
                 // WARNING: For Identity users, this should use UserManager.CreateAsync instead
                 // This method bypasses Identity's password hashing and validation
                 var userEntity = new UserEntity
@@ -97,7 +97,7 @@ namespace CodeLeap.Application.Services
                 };
 
                 var createdUser = await _userRepository.CreateUserAsync(userEntity);
-                
+
                 if (createdUser == null)
                 {
                     _logger.Error("User creation failed By User : {userId}", _currentUserService.UserId!);
@@ -128,7 +128,7 @@ namespace CodeLeap.Application.Services
             try
             {
                 _logger.Info("Updating user By User : {userId}", _currentUserService.UserId!);
-                
+
                 // WARNING: For Identity users, password changes should use UserManager.ChangePasswordAsync
                 var userEntity = new UserEntity
                 {
@@ -140,7 +140,7 @@ namespace CodeLeap.Application.Services
                 };
 
                 var updatedUser = await _userRepository.UpdateUserAsync(userId, userEntity);
-                
+
                 if (updatedUser == null)
                 {
                     _logger.Error("User update failed - user not found : {userId} By User : {currentUserId}", userId, _currentUserService.UserId!);
@@ -172,7 +172,7 @@ namespace CodeLeap.Application.Services
             {
                 _logger.Info("Deleting user");
                 var result = await _userRepository.DeleteUserAsync(id);
-                
+
                 if (result)
                 {
                     _logger.Info("User deleted successfully");
@@ -205,7 +205,7 @@ namespace CodeLeap.Application.Services
         {
             if (user == null)
                 return null;
-            
+
             return new UserDto
             {
                 Id = user.Id,
