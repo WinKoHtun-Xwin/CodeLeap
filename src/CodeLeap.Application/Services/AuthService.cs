@@ -70,14 +70,20 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Logging in user By User : {username}", loginRequest.Username);
+                _logger.Info("Logging in user By User : {emailOrUsername}", loginRequest.EmailOrUsername);
                 
-                // Use UserManager to find user by username
-                var existingUser = await _userManager.FindByNameAsync(loginRequest.Username);
+                // Try to find user by username first, then by email
+                var existingUser = await _userManager.FindByNameAsync(loginRequest.EmailOrUsername);
+                
+                if (existingUser == null)
+                {
+                    // If not found by username, try email
+                    existingUser = await _userManager.FindByEmailAsync(loginRequest.EmailOrUsername);
+                }
 
                 if (existingUser == null)
                 {
-                    _logger.Error("User not found By User : {username}", loginRequest.Username);
+                    _logger.Error("User not found By User : {emailOrUsername}", loginRequest.EmailOrUsername);
                     return BaseResponseModel<GetAuthDto>.Failure(
                         ResponseMessage.LoginMessage.UserNotFound
                     );
@@ -106,27 +112,27 @@ namespace CodeLeap.Application.Services
                     
                     if (getAuthDto == null)
                     {
-                        _logger.Error("Failed to generate token for user By User : {username}", loginRequest.Username);
+                        _logger.Error("Failed to generate token for user By User : {emailOrUsername}", loginRequest.EmailOrUsername);
                         return BaseResponseModel<GetAuthDto>.Failure(
                             ResponseMessage.LoginMessage.TokenGenerationFailed
                         );
                     }
 
-                    _logger.Info("User logged in successfully By User : {username}", loginRequest.Username);
+                    _logger.Info("User logged in successfully By User : {emailOrUsername}", loginRequest.EmailOrUsername);
                     return BaseResponseModel<GetAuthDto>.SuccessResponse(
                         getAuthDto,
                         ResponseMessage.LoginMessage.Success
                     );
                 }
                 
-                _logger.Error("Invalid credentials By User : {username}", loginRequest.Username);
+                _logger.Error("Invalid credentials By User : {emailOrUsername}", loginRequest.EmailOrUsername);
                 return BaseResponseModel<GetAuthDto>.Failure(
                     ResponseMessage.LoginMessage.InvalidCredentials
                 );
             }
             catch (Exception ex)
             {
-                _logger.Error("Error logging in user By User : {username}", loginRequest.Username, ex);
+                _logger.Error("Login failed for user: {emailOrUsername}. Error: {error}", loginRequest.EmailOrUsername, ex.Message);
                 return BaseResponseModel<GetAuthDto>.Failure(
                     ResponseMessage.GeneralMessage.InternalServerError,
                     ex.Message
@@ -140,7 +146,7 @@ namespace CodeLeap.Application.Services
             {
                 _logger.Info("Registering new user By User : {username}", registerNewUserDto.Username);
                 
-                // Check if user already exists
+                // Check if user already exists by username
                 var existingUser = await _userManager.FindByNameAsync(registerNewUserDto.Username.Trim());
 
                 if (existingUser != null)
@@ -150,6 +156,16 @@ namespace CodeLeap.Application.Services
                         ResponseMessage.RegisterNewUserMessage.UserAlreadyExists
                     );
                 }
+                
+                // Check if email already exists
+                var existingEmail = await _userManager.FindByEmailAsync(registerNewUserDto.Email.Trim());
+                if (existingEmail != null)
+                {
+                    _logger.Error("Email already exists: {email}", registerNewUserDto.Email);
+                    return BaseResponseModel<bool>.Failure(
+                        "Email address is already registered"
+                    );
+                }
 
                 // Create new user entity
                 var userId = Guid.NewGuid().ToString();
@@ -157,6 +173,8 @@ namespace CodeLeap.Application.Services
                 {
                     Id = userId,
                     UserName = registerNewUserDto.Username.Trim(),
+                    Email = registerNewUserDto.Email.Trim(),  // ✅ Save email
+                    EmailConfirmed = false,  // Optional: require email confirmation
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = userId,
                     IsActive = true,
