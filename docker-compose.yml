@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: final  # Build through test stage to final
     container_name: codeleap-api
     restart: unless-stopped
     ports:

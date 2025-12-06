@@ -7,6 +7,8 @@
 docker-compose up -d --build
 ```
 
+**Note:** The build process automatically runs all 30 unit tests before creating the container. If any test fails, the build will stop and prevent deployment.
+
 ### 2. View Logs
 ```bash
 # API logs
@@ -17,6 +19,24 @@ docker-compose logs -f api
 ```bash
 docker-compose down
 ```
+
+---
+
+## 🧪 Automated Testing
+
+The Docker build includes an automated test stage:
+
+1. **Build Stage** - Restores dependencies and builds the application
+2. **Test Stage** ✅ - Runs all 30 unit tests (Auth, User, Product)
+3. **Publish Stage** - Only runs if tests pass
+4. **Final Stage** - Creates the runtime container
+
+**Benefits:**
+- ✅ Prevents deploying broken code
+- ✅ Ensures all tests pass before deployment
+- ✅ Catches bugs early in the deployment pipeline
+
+If tests fail, you'll see the error in the build output and the container won't be created.
 
 ---
 
