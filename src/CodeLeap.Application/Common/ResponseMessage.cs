@@ -20,11 +20,11 @@ namespace CodeLeap.Application.Common
         }
         public static class LoginMessage
         {
-
             public const string Success = "Login successful";
-            public const string InvalidCredentials = "Invalid username or password";
             public const string UserNotFound = "User not found";
+            public const string InvalidCredentials = "Invalid username or password";
             public const string TokenGenerationFailed = "Failed to generate authentication token";
+            public const string InvalidRefreshToken = "Invalid or expired refresh token. Please login again.";
         }
 
         public static class UserMessage

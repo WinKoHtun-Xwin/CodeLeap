@@ -46,7 +46,7 @@ namespace CodeLeap.Application.Services
                 {
                     _logger.Error("Failed to refresh token - invalid or expired token");
                     return BaseResponseModel<GetAuthDto>.Failure(
-                        ResponseMessage.LoginMessage.InvalidCredentials
+                        ResponseMessage.LoginMessage.InvalidRefreshToken
                     );
                 }
 
