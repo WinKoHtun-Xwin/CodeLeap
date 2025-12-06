@@ -13,15 +13,18 @@ namespace CodeLeap.Application.Services
         private readonly UserManager<UserEntity> _userManager;
         private readonly IJwtService _jwtService;
         private readonly ILoggerService<AuthService> _logger;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
 
         public AuthService(
             UserManager<UserEntity> userManager,
             IJwtService jwtService,
-            ILoggerService<AuthService> logger)
+            ILoggerService<AuthService> logger,
+            IRefreshTokenRepository refreshTokenRepository)
         {
             _userManager = userManager;
             _jwtService = jwtService;
             _logger = logger;
+            _refreshTokenRepository = refreshTokenRepository;
         }
 
         public async Task<BaseResponseModel<GetAuthDto>> RefreshTokenAsync(string refreshToken)
@@ -80,11 +83,14 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                // Use                // Verify password
+                // Verify password
                 var isValid = await _userManager.CheckPasswordAsync(existingUser, loginRequest.Password);
                 
                 if (isValid)
                 {
+                    // ✅ SINGLE SESSION ENFORCEMENT: Revoke all existing sessions
+                    await _refreshTokenRepository.RevokeAllUserTokensAsync(existingUser.Id);
+                    
                     // Get user roles
                     var roles = await _userManager.GetRolesAsync(existingUser);
                     var rolesList = roles.ToList();
@@ -95,6 +101,7 @@ namespace CodeLeap.Application.Services
                         rolesList.Add("User");
                     }
 
+                    // Generate new token (only this session will be active)
                     var getAuthDto = await _jwtService.GenerateToken(existingUser.Id, existingUser.UserName!, rolesList);
                     
                     if (getAuthDto == null)

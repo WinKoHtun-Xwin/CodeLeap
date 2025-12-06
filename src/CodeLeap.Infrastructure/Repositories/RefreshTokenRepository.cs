@@ -44,5 +44,19 @@ namespace CodeLeap.Infrastructure.Repositories
         {
             return await dbContext.Set<UserEntity>().FindAsync(userId);
         }
+
+        public async Task RevokeAllUserTokensAsync(string userId)
+        {
+            var userTokens = await dbContext.Set<RefreshTokenEntity>()
+                .Where(t => t.UserId == userId && !t.IsRevoked)
+                .ToListAsync();
+            
+            foreach (var token in userTokens)
+            {
+                token.IsRevoked = true;
+            }
+            
+            await dbContext.SaveChangesAsync();
+        }
     }
 }
