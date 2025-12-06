@@ -69,6 +69,8 @@ public class JwtService : IJwtService
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken.Token,
+            UserId = userId,
+            Username = username,
             ExpiresAt = accessExpiry
         };
     }
