@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Keycloak.AuthServices.Authentication;
 
 namespace CodeLeap.API
 {
@@ -30,28 +31,47 @@ namespace CodeLeap.API
             builder.Services.AddSwaggerGen(c =>
             {
                 const string bearerScheme = "Bearer";
-                
-                c.SwaggerDoc("v1", new OpenApiInfo 
-                { 
-                    Title = "CodeLeap API", 
+                const string oauth2Scheme = "oauth2";
+
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "CodeLeap API",
                     Version = "v1.0.0",
                     Description = @"
                     # CodeLeap API Documentation
 
-                    A comprehensive ASP.NET Core Web API for managing users and products with robust authentication and authorization.
+                    A comprehensive ASP.NET Core Web API for managing users and products with Keycloak authentication.
 
                     ## Features
-                    - JWT-based authentication with refresh tokens
+                    - **Keycloak Authentication** with OAuth2/OpenID Connect
                     - Role-based authorization (Admin, User)
                     - CRUD operations for Users and Products
                     - Comprehensive error handling and logging
                     - Clean Architecture implementation
 
                     ## Authentication Flow
-                    1. **Register**: Create a new user account at `/api/Auth/register`
-                    2. **Login**: Authenticate with credentials at `/api/Auth/login` to receive JWT tokens
-                    3. **Access Protected Endpoints**: Include the JWT token in the Authorization header
-                    4. **Refresh Token**: Use the refresh token at `/api/Auth/refreshToken/{refreshToken}` to get new access tokens
+                    
+                    ### Option 1: Keycloak OAuth2 via Swagger (Easiest)
+                    1. Click **Authorize** button below
+                    2. Select 'oauth2' scheme
+                    3. Login with Keycloak credentials:
+                       - Admin: `admin` / `admin123`
+                       - User: `testuser` / `user123`
+                    4. Tokens are automatically managed
+                    
+                    ### Option 2: Direct Token via curl
+                    1. Obtain token from Keycloak:
+                       ```bash
+                       curl -X POST 'http://localhost:8080/realms/CodeLeap/protocol/openid-connect/token' \
+                         -d 'client_id=codeleap-api' \
+                         -d 'client_secret=codeleap-api-secret' \
+                         -d 'username=admin' \
+                         -d 'password=admin123' \
+                         -d 'grant_type=password'
+                       ```
+                    2. Copy the `access_token` from response
+                    3. Click **Authorize**, select 'Bearer' scheme
+                    4. Paste token (without 'Bearer' prefix)
 
                     ## Authorization Policies
                     - **AdminOnly**: Requires Admin role (e.g., delete operations)
@@ -87,13 +107,47 @@ namespace CodeLeap.API
                     c.IncludeXmlComments(xmlPath);
                 }
 
+                // OAuth2 - Keycloak Integration
+                var keycloakUrl = builder.Configuration["Keycloak:auth-server-url"] ?? "http://localhost:8080";
+                var realm = builder.Configuration["Keycloak:realm"] ?? "CodeLeap";
+
+                c.AddSecurityDefinition(oauth2Scheme, new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        Password = new OpenApiOAuthFlow
+                        {
+                            TokenUrl = new Uri($"{keycloakUrl}/realms/{realm}/protocol/openid-connect/token"),
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "OpenID Connect scope" },
+                                { "profile", "Profile information" },
+                                { "email", "Email address" }
+                            }
+                        },
+                        AuthorizationCode = new OpenApiOAuthFlow
+                        {
+                            AuthorizationUrl = new Uri($"{keycloakUrl}/realms/{realm}/protocol/openid-connect/auth"),
+                            TokenUrl = new Uri($"{keycloakUrl}/realms/{realm}/protocol/openid-connect/token"),
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "OpenID Connect scope" },
+                                { "profile", "Profile information" },
+                                { "email", "Email address" }
+                            }
+                        }
+                    }
+                });
+
+                // Bearer Token - Direct JWT
                 c.AddSecurityDefinition(bearerScheme, new OpenApiSecurityScheme
                 {
                     Description = @"JWT Authorization header using the Bearer scheme.
                       
-Enter 'Bearer' [space] and then your token in the text input below.
+Enter your token in the text input below (without 'Bearer' prefix).
                       
-Example: 'Bearer 12345abcdef'",
+Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
@@ -109,11 +163,19 @@ Example: 'Bearer 12345abcdef'",
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
+                                Id = oauth2Scheme
+                            }
+                        },
+                        new List<string> { "openid", "profile", "email" }
+                    },
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
                                 Id = bearerScheme
-                            },
-                            Scheme = "oauth2",
-                            Name = bearerScheme,
-                            In = ParameterLocation.Header,
+                            }
                         },
                         new List<string>()
                     }
@@ -122,67 +184,28 @@ Example: 'Bearer 12345abcdef'",
                 // Add operation filters for better documentation
                 c.EnableAnnotations();
                 c.DescribeAllParametersInCamelCase();
-                
+
                 // Add examples for common responses
                 c.SwaggerGeneratorOptions.DescribeAllParametersInCamelCase = true;
             });
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Access_Key"]!)),
-                    ClockSkew = TimeSpan.Zero
-                };
+            // Add Keycloak Authentication Services
+            // This automatically registers JWT Bearer authentication for Keycloak
+            builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnChallenge = async context =>
-                    {
-                        context.HandleResponse();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-
-                        var response = CodeLeap.Application.Common.BaseResponseModel<object>.Failure(
-                            CodeLeap.Application.Common.ResponseMessage.GeneralMessage.Unauthorized,
-                            "Authentication token is missing or invalid. Please provide a valid Bearer token in the Authorization header."
-                        );
-
-                        var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                        });
-
-                        await context.Response.WriteAsync(jsonResponse);
-                    }
-                };
-            });
 
             builder.Services.AddAuthorization(options =>
             {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
+                // Remove FallbackPolicy to allow anonymous access to Swagger
+                // Controllers will use [Authorize] attribute for protection
 
-                options.AddPolicy("AdminOnly", policy => 
+                options.AddPolicy("AdminOnly", policy =>
                     policy.RequireRole("Admin"));
-                
-                options.AddPolicy("UserOrAdmin", policy => 
+
+                options.AddPolicy("UserOrAdmin", policy =>
                     policy.RequireRole("User", "Admin"));
-                
-                options.AddPolicy("AuthenticatedUser", policy => 
+
+                options.AddPolicy("AuthenticatedUser", policy =>
                     policy.RequireAuthenticatedUser());
             });
 
@@ -198,11 +221,15 @@ Example: 'Bearer 12345abcdef'",
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            // Enable Swagger in all environments (Development, Docker, Production)
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeLeap API v1");
+                c.OAuthClientId(builder.Configuration["Keycloak:resource"] ?? "codeleap-api");
+                c.OAuthClientSecret(builder.Configuration["Keycloak:credentials:secret"] ?? "codeleap-api-secret");
+                c.OAuthUsePkce();
+            });
 
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 

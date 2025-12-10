@@ -5,14 +5,14 @@ A comprehensive ASP.NET Core Web API built with Clean Architecture principles, f
 ## 🚀 Features
 
 - **Clean Architecture** - Separation of concerns with distinct layers
-- **JWT Authentication** - Secure token-based authentication with refresh tokens
+- **Keycloak Authentication** - Industry-standard OAuth2/OpenID Connect authentication
 - **Role-Based Authorization** - Admin and User roles with policy-based access control
 - **RESTful API** - Full CRUD operations for Users and Products
 - **PostgreSQL Database** - Entity Framework Core with Code-First migrations
 - **Comprehensive Documentation** - OpenAPI/Swagger documentation with detailed endpoint information
 - **Global Error Handling** - Centralized exception handling middleware
 - **Model Validation** - Automatic request validation with detailed error responses
-- **Docker Support** - Containerized deployment ready
+- **Docker Support** - Full docker-compose configuration with Keycloak, PostgreSQL, and API
 
 ## 🏗️ Architecture Overview
 
@@ -48,14 +48,51 @@ The project follows Clean Architecture principles with the following layers:
 
 ## ⚡ Quick Start
 
-### 1. Clone the Repository
+### Option 1: Docker Compose (Recommended)
+
+The easiest way to get started with full Keycloak integration:
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd CodeLeap
+
+# 2. Start all services (Keycloak, PostgreSQL, API)
+docker-compose up -d
+
+# 3. Wait for services to be healthy (30-60 seconds)
+docker-compose ps
+
+# 4. Access the services
+# - API: http://localhost:5000
+# - Swagger UI: http://localhost:5000/swagger
+# - Keycloak Admin: http://localhost:8080 (admin/admin)
+```
+
+**Pre-configured Test Users:**
+- **Admin**: username: `admin`, password: `admin123`
+- **User**: username: `testuser`, password: `user123`
+
+### Option 2: Local Development
+
+For local development without Docker:
+
+#### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd CodeLeap
 ```
 
-### 2. Configure Database Connection
+#### 2. Start Keycloak (using Docker)
+
+```bash
+docker-compose up -d keycloak
+```
+
+Or run Keycloak separately if you prefer.
+
+#### 3. Configure Database Connection
 
 Update the connection string in `src/CodeLeap.API/appsettings.json`:
 
@@ -67,31 +104,31 @@ Update the connection string in `src/CodeLeap.API/appsettings.json`:
 }
 ```
 
-### 3. Configure JWT Settings
+#### 4. Configure Keycloak Settings
 
-Update JWT configuration in `src/CodeLeap.API/appsettings.json`:
+Keycloak is pre-configured in `appsettings.json`:
 
 ```json
 {
-  "Jwt": {
-    "Access_Key": "your-256-bit-secret-key-here",
-    "Refresh_Key": "your-256-bit-refresh-secret-key-here",
-    "Issuer": "CodeLeap",
-    "Audience": "CodeLeapUsers",
-    "AccessTokenExpiryMinutes": 15,
-    "RefreshTokenExpiryDays": 7
+  "Keycloak": {
+    "realm": "CodeLeap",
+    "auth-server-url": "http://localhost:8080",
+    "resource": "codeleap-api",
+    "credentials": {
+      "secret": "codeleap-api-secret"
+    }
   }
 }
 ```
 
-### 4. Run Database Migrations
+#### 5. Run Database Migrations
 
 ```bash
 cd src/CodeLeap.API
 dotnet ef database update
 ```
 
-### 5. Run the Application
+#### 6. Run the Application
 
 ```bash
 dotnet run
@@ -103,14 +140,6 @@ The API will be available at:
 - **Swagger UI**: `https://localhost:5001/swagger`
 
 ## 📋 API Documentation
-
-### Authentication Endpoints
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/Auth/register` | Register new user | No |
-| POST | `/api/Auth/login` | User login | No |
-| POST | `/api/Auth/refreshToken/{token}` | Refresh access token | No |
 
 ### User Management Endpoints
 
@@ -138,12 +167,51 @@ The API will be available at:
 
 ## 🔐 Authentication & Authorization
 
-### JWT Token Flow
+### Keycloak Authentication
 
-1. **Register** a new account or **Login** with existing credentials
-2. Receive **Access Token** (15 min expiry) and **Refresh Token** (7 days expiry)
-3. Include Access Token in Authorization header: `Bearer <token>`
-4. Use Refresh Token to get new Access Token when expired
+CodeLeap API uses Keycloak for all authentication via OAuth2/OpenID Connect.
+
+#### Obtaining Tokens
+
+**Method 1: Using Swagger UI (Easiest)**
+1. Navigate to http://localhost:5000/swagger
+2. Click the **Authorize** button
+3. Select the `oauth2` scheme
+4. Enter credentials:
+   - Admin: `admin` / `admin123`
+   - User: `testuser` / `user123`
+5. Tokens are automatically managed
+
+**Method 2: Direct API Call**
+
+```bash
+curl -X POST 'http://localhost:8080/realms/CodeLeap/protocol/openid-connect/token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'client_id=codeleap-api' \
+  -d 'client_secret=codeleap-api-secret' \
+  -d 'username=admin' \
+  -d 'password=admin123' \
+  -d 'grant_type=password'
+```
+
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI...",
+  "expires_in": 900,
+  "refresh_expires_in": 1800,
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI...",
+  "token_type": "Bearer"
+}
+```
+
+#### Using the Access Token
+
+```bash
+# Use the access token in the Authorization header
+curl -X GET 'http://localhost:5000/api/User/me' \
+  -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI...'
+```
 
 ### Authorization Policies
 
@@ -151,69 +219,90 @@ The API will be available at:
 - **UserOrAdmin**: Requires `User` or `Admin` role  
 - **AuthenticatedUser**: Requires any authenticated user
 
-### Example Authentication Flow
+### Keycloak Admin Console
 
-```bash
-# 1. Register a new user
-curl -X POST "https://localhost:5001/api/Auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "SecurePass123!"}'
+Access the Keycloak admin console to manage users, roles, and clients:
 
-# 2. Login to get tokens
-curl -X POST "https://localhost:5001/api/Auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "john_doe", "password": "SecurePass123!"}'
+- **URL**: http://localhost:8080
+- **Username**: `admin`
+- **Password**: `admin`
+- **Realm**: `CodeLeap`
 
-# 3. Use access token for protected endpoints
-curl -X GET "https://localhost:5001/api/User/me" \
-  -H "Authorization: Bearer <your-access-token>"
-```
+For detailed Keycloak configuration, see [`keycloak/README.md`](keycloak/README.md).
 
 ## 🐳 Docker Deployment
 
-### Build Docker Image
+### Docker Compose (Recommended)
+
+The project includes a complete docker-compose setup with:
+- Keycloak authentication server
+- PostgreSQL database for Keycloak
+- PostgreSQL database for CodeLeap application
+- CodeLeap API
 
 ```bash
-docker build -t codeleap-api .
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (clean slate)
+docker-compose down -v
 ```
 
-### Run with Docker
+### Service URLs
+
+- **API**: http://localhost:5000
+- **Swagger**: http://localhost:5000/swagger
+- **Keycloak**: http://localhost:8080
+- **PostgreSQL (Keycloak)**: localhost:5432
+- **PostgreSQL (CodeLeap)**: localhost:5433
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and customize:
 
 ```bash
-docker run -d \
-  --name codeleap-api \
-  -p 8080:8080 \
-  -e ConnectionStrings__aws_postgres_url="Host=host.docker.internal;Port=5432;Database=codeleap_db;Username=postgres;Password=password" \
-  codeleap-api
+cp .env.example .env
 ```
 
-### Docker Compose (with PostgreSQL)
+### Docker Compose Services
 
 ```yaml
-version: '3.8'
 services:
-  api:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - ConnectionStrings__aws_postgres_url=Host=db;Port=5432;Database=codeleap_db;Username=postgres;Password=password
-    depends_on:
-      - db
+  keycloak:        # Authentication server
+  keycloak-db:     # Keycloak PostgreSQL
+  codeleap-api:    # API service
+  codeleap-db:     # Application PostgreSQL
+```
 
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=codeleap_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+### Health Checks
 
-volumes:
-  postgres_data:
+All services include health checks. View status:
+
+```bash
+docker-compose ps
+```
+
+### Manual Docker Build
+
+If you want to build the API image manually:
+
+```bash
+# Build the API image
+docker build -t codeleap-api -f src/CodeLeap.API/Dockerfile .
+
+# Run the container
+docker run -d \
+  --name codeleap-api \
+  -p 5000:80 \
+  -e ConnectionStrings__aws_postgres_url="Host=host.docker.internal;Port=5432;..." \
+  -e Keycloak__auth-server-url="http://host.docker.internal:8080" \
+  codeleap-api
 ```
 
 ## 🧪 Testing

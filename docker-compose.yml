@@ -1,0 +1,67 @@
+services:
+  # Keycloak Authentication Server (using AWS PostgreSQL)
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: codeleap-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com:5432/keycloak
+      KC_DB_USERNAME: stockposadmin
+      KC_DB_PASSWORD: _?S%[vPsk7eo
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    networks:
+      - codeleap-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 150s
+
+  # CodeLeap API Service (using AWS PostgreSQL)
+  codeleap-api:
+    build:
+      context: .
+      dockerfile: src/CodeLeap.API/Dockerfile
+    container_name: codeleap-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__aws_postgres_url=HOST=stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com;Port=5432;Database=codeleap_postgres_test;Username=stockposadmin;Password=_?S%[vPsk7eo
+      - Keycloak__auth-server-url=http://keycloak:8080
+      - Keycloak__realm=CodeLeap
+      - Keycloak__resource=codeleap-api
+      - Keycloak__ssl-required=none
+      - Keycloak__verify-token-audience=true
+      - Keycloak__credentials__secret=codeleap-api-secret
+    ports:
+      - "5001:80"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - codeleap-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  codeleap-network:
+    driver: bridge
