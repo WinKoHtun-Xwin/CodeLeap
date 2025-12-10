@@ -9,9 +9,7 @@ namespace CodeLeap.Application
         public static IServiceCollection AddApplicationDI(this IServiceCollection services)
         {
             // Register services
-            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IProductService, ProductService>();
-            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }

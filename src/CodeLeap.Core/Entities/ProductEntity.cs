@@ -14,6 +14,5 @@ namespace CodeLeap.Core.Entities
         public required string Description { get; set; }
         public required int Stock { get; set; }
         public required string ImageUrl { get; set; }
-        public virtual UserEntity? User { get; set; }
     }
 }

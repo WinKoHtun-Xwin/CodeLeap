@@ -3,39 +3,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSqlDbContext:DbContext
+    public class PostgresSqlDbContext : DbContext
     {
         public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
         {
         }
 
-        public DbSet<UserEntity> Users { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
-        public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<UserEntity>(entity =>
+            modelBuilder.Entity<ProductEntity>(entity =>
             {
-                entity.ToTable("Users");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .IsRequired();
-
-                entity.Property(e => e.Username)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Password)
-                    .IsRequired()
-                    .HasMaxLength(500);
-            });
-
-            modelBuilder.Entity<ProductEntity>(entity => {
                 entity.ToTable("Products");
 
                 entity.HasKey(e => e.Id);
@@ -64,36 +45,6 @@ namespace CodeLeap.Infrastructure.PostgresSQL
                 entity.Property(e => e.ImageUrl)
                     .IsRequired()
                     .HasMaxLength(500);
-
-                entity.HasOne<UserEntity>()                      // Product has one User
-                     .WithMany(u => u.Products)                 // User has many Products
-                     .HasForeignKey(p => p.CreatedBy)           // FK in Product
-                     .HasPrincipalKey(u => u.Id)                // PK in User
-                     .OnDelete(DeleteBehavior.Restrict);        // Prevent cascade delete
-             });
-
-            modelBuilder.Entity<RefreshTokenEntity>(entity =>
-            {
-                entity.ToTable("RefreshTokens");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .IsRequired();
-
-                entity.Property(e => e.UserId)
-                    .IsRequired();
-
-                entity.Property(e => e.Token)
-                    .IsRequired()
-                    .HasMaxLength(500);
-
-                entity.Property(e => e.ExpiresAt)
-                    .IsRequired();
-
-                entity.Property(e => e.IsRevoked)
-                    .IsRequired()
-                    .HasDefaultValue(false);
             });
         }
     }
