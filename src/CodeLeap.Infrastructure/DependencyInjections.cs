@@ -23,8 +23,9 @@ namespace CodeLeap.Infrastructure
             services.AddScoped<IProductRepository, ProductRepository>();
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IKeycloakUserinfoService, KeycloakUserinfoService>();
 
-            services.AddTransient<IPasswordService, PasswordService>();
+            services.AddScoped<IPasswordService, PasswordService>();
 
             services.AddSingleton(typeof(ILoggerService<>), typeof(LoggerService<>));
 

@@ -41,12 +41,13 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
+      - DOTNET_RUNNING_IN_CONTAINER=true
       - ConnectionStrings__aws_postgres_url=HOST=stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com;Port=5432;Database=codeleap_postgres_test;Username=stockposadmin;Password=_?S%[vPsk7eo
       - Keycloak__auth-server-url=http://keycloak:8080
       - Keycloak__realm=CodeLeap
       - Keycloak__resource=codeleap-api
       - Keycloak__ssl-required=none
-      - Keycloak__verify-token-audience=true
+      - Keycloak__verify-token-audience=false
       - Keycloak__credentials__secret=codeleap-api-secret
     ports:
       - "5001:80"
