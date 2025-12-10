@@ -2,14 +2,36 @@
 
 ## Overview
 
-This directory contains the Keycloak realm configuration for the CodeLeap API. The realm is automatically imported when Keycloak starts via docker-compose.
+This directory contains the standalone Keycloak Docker configuration for the CodeLeap API. The realm is automatically imported when Keycloak starts via the included `docker-compose.yml`.
 
-## Accessing Keycloak Admin Console
+## Quick Start
 
-1. Start the services:
+### Running Keycloak Standalone
+
+1. Navigate to the keycloak directory:
+   ```bash
+   cd keycloak
+   ```
+
+2. Start Keycloak using docker-compose:
    ```bash
    docker-compose up -d
    ```
+
+3. Check the service status:
+   ```bash
+   docker-compose ps
+   docker-compose logs -f keycloak
+   ```
+
+4. Stop Keycloak:
+   ```bash
+   docker-compose down
+   ```
+
+## Accessing Keycloak Admin Console
+
+1. Ensure Keycloak is running (see Quick Start above)
 
 2. Access the admin console at: **http://localhost:8080**
 
@@ -129,6 +151,34 @@ Ensure the API is configured with correct Keycloak URL:
 - Host machine: `http://localhost:8080`
 
 Check `appsettings.Docker.json` for correct configuration.
+
+## Docker Configuration Files
+
+This directory contains the following Docker-related files:
+
+- **`Dockerfile`**: Custom Keycloak image that includes the realm export for automatic import
+- **`docker-compose.yml`**: Standalone compose configuration for running Keycloak independently
+- **`realm-export.json`**: Pre-configured CodeLeap realm with clients, users, and roles
+
+### Network Configuration
+
+The Keycloak service creates a Docker network named `codeleap-network`. The main CodeLeap API can connect to this network to communicate with Keycloak.
+
+To run the full application stack:
+
+1. Start Keycloak first:
+   ```bash
+   cd keycloak
+   docker-compose up -d
+   ```
+
+2. Then start the API from the root directory:
+   ```bash
+   cd ..
+   docker-compose up -d
+   ```
+
+The API will automatically connect to the `codeleap-network` and can access Keycloak via the hostname `keycloak`.
 
 ## Security Notes
 

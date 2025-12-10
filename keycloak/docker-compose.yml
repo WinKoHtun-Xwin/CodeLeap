@@ -1,0 +1,47 @@
+services:
+  # Keycloak Authentication Server (using AWS PostgreSQL)
+  keycloak:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codeleap-keycloak:latest
+    container_name: codeleap-keycloak
+    command: start-dev --import-realm
+    environment:
+      # Database Configuration (AWS PostgreSQL)
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com:5432/keycloak
+      KC_DB_USERNAME: stockposadmin
+      KC_DB_PASSWORD: _?S%[vPsk7eo
+      
+      # Hostname Configuration
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      
+      # Logging & Monitoring
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      
+      # Admin Credentials
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"  # Keycloak HTTP
+      - "9000:9000"  # Keycloak metrics
+    networks:
+      - codeleap-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 150s
+networks:
+  codeleap-network:
+    name: codeleap-network
+    driver: bridge
+    external: false
+

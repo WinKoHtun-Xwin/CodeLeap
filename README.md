@@ -57,15 +57,20 @@ The easiest way to get started with full Keycloak integration:
 git clone <repository-url>
 cd CodeLeap
 
-# 2. Start all services (Keycloak, PostgreSQL, API)
+# 2. Start Keycloak first
+cd keycloak
 docker-compose up -d
 
-# 3. Wait for services to be healthy (30-60 seconds)
-docker-compose ps
+# 3. Wait for Keycloak to be healthy (30-60 seconds)
+docker-compose logs -f keycloak
 
-# 4. Access the services
-# - API: http://localhost:5000
-# - Swagger UI: http://localhost:5000/swagger
+# 4. Start the API (in a new terminal or after Keycloak is ready)
+cd ..
+docker-compose up -d
+
+# 5. Access the services
+# - API: http://localhost:5001
+# - Swagger UI: http://localhost:5001/swagger
 # - Keycloak Admin: http://localhost:8080 (admin/admin)
 ```
 
@@ -87,10 +92,9 @@ cd CodeLeap
 #### 2. Start Keycloak (using Docker)
 
 ```bash
-docker-compose up -d keycloak
+cd keycloak
+docker-compose up -d
 ```
-
-Or run Keycloak separately if you prefer.
 
 #### 3. Configure Database Connection
 
@@ -232,59 +236,82 @@ For detailed Keycloak configuration, see [`keycloak/README.md`](keycloak/README.
 
 ## 🐳 Docker Deployment
 
-### Docker Compose (Recommended)
+### Docker Compose Structure
 
-The project includes a complete docker-compose setup with:
-- Keycloak authentication server
-- PostgreSQL database for Keycloak
-- PostgreSQL database for CodeLeap application
-- CodeLeap API
+The project uses a **separated Docker configuration**:
+- **Keycloak**: Has its own `Dockerfile` and `docker-compose.yml` in the `keycloak/` folder
+- **CodeLeap API**: Configured in the root `docker-compose.yml`
 
+Both services communicate via a shared Docker network (`codeleap-network`).
+
+### Starting the Application
+
+**Step 1: Start Keycloak**
 ```bash
-# Start all services
+cd keycloak
+docker-compose up -d
+
+# Verify Keycloak is running
+docker-compose ps
+docker-compose logs -f keycloak
+```
+
+**Step 2: Start the API**
+```bash
+# From the root directory
+cd ..
 docker-compose up -d
 
 # View logs
-docker-compose logs -f
+docker-compose logs -f codeleap-api
+```
 
-# Stop all services
+### Stopping Services
+
+```bash
+# Stop API
 docker-compose down
 
-# Stop and remove volumes (clean slate)
+# Stop Keycloak
+cd keycloak
+docker-compose down
+
+# To remove volumes (clean slate)
 docker-compose down -v
 ```
 
 ### Service URLs
 
-- **API**: http://localhost:5000
-- **Swagger**: http://localhost:5000/swagger
+- **API**: http://localhost:5001
+- **Swagger**: http://localhost:5001/swagger
 - **Keycloak**: http://localhost:8080
-- **PostgreSQL (Keycloak)**: localhost:5432
-- **PostgreSQL (CodeLeap)**: localhost:5433
 
-### Environment Variables
+### Docker Services Overview
 
-Copy `.env.example` to `.env` and customize:
+**Keycloak Service** (in `keycloak/docker-compose.yml`):
+- Custom Keycloak image with pre-configured realm
+- Connects to AWS PostgreSQL for persistence
+- Exposes ports 8080 (HTTP) and 9000 (metrics)
+- Creates `codeleap-network` for inter-service communication
 
-```bash
-cp .env.example .env
-```
+**API Service** (in root `docker-compose.yml`):
 
-### Docker Compose Services
-
-```yaml
-services:
-  keycloak:        # Authentication server
-  keycloak-db:     # Keycloak PostgreSQL
-  codeleap-api:    # API service
-  codeleap-db:     # Application PostgreSQL
-```
+- Builds from `src/CodeLeap.API/Dockerfile`
+- Connects to AWS PostgreSQL for application data
+- Joins `codeleap-network` to communicate with Keycloak
+- Exposes port 5001
 
 ### Health Checks
 
-All services include health checks. View status:
+Both services include health checks. View status:
 
 ```bash
+# Check Keycloak
+cd keycloak
+docker-compose ps
+
+# Check API
+cd ..
 docker-compose ps
 ```
 
@@ -296,12 +323,13 @@ If you want to build the API image manually:
 # Build the API image
 docker build -t codeleap-api -f src/CodeLeap.API/Dockerfile .
 
-# Run the container
+# Run the container (ensure Keycloak network exists)
 docker run -d \
   --name codeleap-api \
-  -p 5000:80 \
-  -e ConnectionStrings__aws_postgres_url="Host=host.docker.internal;Port=5432;..." \
-  -e Keycloak__auth-server-url="http://host.docker.internal:8080" \
+  --network codeleap-network \
+  -p 5001:80 \
+  -e ConnectionStrings__aws_postgres_url="Host=stockpos.c18eoyyecdq1.ap-southeast-1.rds.amazonaws.com;Port=5432;..." \
+  -e Keycloak__auth-server-url="http://keycloak:8080" \
   codeleap-api
 ```
 
