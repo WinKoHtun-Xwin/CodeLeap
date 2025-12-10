@@ -20,15 +20,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return new BaseResponseModelPagination<IEnumerable<ProductDto>>
-                    {
-                        Success = false,
-                        Message = ResponseMessage.GeneralMessage.Unauthorized
-                    };
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting products by pagination By User : {userId}", userId);
                 var products = await _productRepository.GetProductsByPaginationAsync(paginationRequestDto.PageNumber, paginationRequestDto.PageSize, paginationRequestDto.Search ?? string.Empty);
@@ -67,11 +59,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return BaseResponseModel<IEnumerable<ProductDto>>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting all products By User : {userId}", userId);
                 var products = await _productRepository.GetAllProductAsync();
@@ -96,11 +84,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting product by id : {id} By User : {userId}", id, userId);
                 var product = await _productRepository.GetProductByIdAsync(id);
@@ -132,11 +116,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Creating product By User : {userId}", userId.ToString());
 
@@ -190,11 +170,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Updating product By User : {userId}", userId);
                 var existingProduct = await _productRepository.GetProductByIdAsync(ProductId);
@@ -246,11 +222,7 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                var userId = _currentUserService.UserId;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return BaseResponseModel<bool>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
-                }
+                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Deleting product By User : {userId}", userId);
                 var existingProduct = await _productRepository.GetProductByIdAsync(id);

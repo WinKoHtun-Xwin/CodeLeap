@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace CodeLeap.API.Filters
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class ModelValidationFilterAttribute : ActionFilterAttribute
+    /// <summary>
+    /// Global validation filter that validates model state and returns standardized error responses
+    /// </summary>
+    public class ModelValidationFilterAttribute : IAsyncActionFilter
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             if (!context.ModelState.IsValid)
             {
@@ -15,7 +17,7 @@ namespace CodeLeap.API.Filters
                     .Where(x => x.Value?.Errors.Count > 0)
                     .ToDictionary(
                         kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? []
                     );
 
                 var errorMessages = string.Join("; ", errors.SelectMany(e => e.Value));
@@ -32,9 +34,10 @@ namespace CodeLeap.API.Filters
                 }
 
                 context.Result = new BadRequestObjectResult(response);
+                return;
             }
 
-            base.OnActionExecuting(context);
+            await next();
         }
     }
 }

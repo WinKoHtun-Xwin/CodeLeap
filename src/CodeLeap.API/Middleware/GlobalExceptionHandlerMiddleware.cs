@@ -4,26 +4,24 @@ using System.Text.Json;
 
 namespace CodeLeap.API.Middleware
 {
-    public class GlobalExceptionHandlerMiddleware
+    public class GlobalExceptionHandlerMiddleware(
+        RequestDelegate next,
+        ILogger<GlobalExceptionHandlerMiddleware> logger)
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger;
-
-        public GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
+        private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            _next = next;
-            _logger = logger;
-        }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
-                await _next(context);
+                await next(context);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unhandled exception occurred");
+                logger.LogError(ex, "An unhandled exception occurred");
                 await HandleExceptionAsync(context, ex);
             }
         }
@@ -31,7 +29,7 @@ namespace CodeLeap.API.Middleware
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            
+
             var response = exception switch
             {
                 ArgumentException => BaseResponseModel<object>.Failure(
@@ -56,10 +54,7 @@ namespace CodeLeap.API.Middleware
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
-            var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var jsonResponse = JsonSerializer.Serialize(response, JsonOptions);
 
             await context.Response.WriteAsync(jsonResponse);
         }

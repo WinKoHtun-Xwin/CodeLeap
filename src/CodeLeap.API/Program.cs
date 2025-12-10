@@ -7,11 +7,18 @@ using Microsoft.OpenApi.Models;
 using CodeLeap.Application.Common;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System.Text.Json;
 
 namespace CodeLeap.API
 {
     public static class Program
     {
+        // Cached JsonSerializerOptions to avoid creating new instances for each serialization
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +26,7 @@ namespace CodeLeap.API
             builder.Services.AddControllers(options =>
             {
                 options.Filters.Add<ModelValidationFilterAttribute>();
+                options.Filters.Add<UserAuthorizationFilter>();
             });
 
             builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -206,7 +214,7 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                         ValidateAudience = builder.Configuration.GetValue<bool>("Keycloak:verify-token-audience"),
                         ValidAudience = builder.Configuration["Keycloak:resource"],
                         ValidateIssuer = true,
-                        ValidIssuers = new[] { options.Authority, "http://localhost:8080/realms/CodeLeap" }
+                        ValidIssuers = [options.Authority, "http://localhost:8080/realms/CodeLeap"]
                     };
 
                     IConfigurationRetriever<OpenIdConnectConfiguration> configRetriever;
@@ -240,10 +248,7 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                                 "Unauthorized",
                                 context.ErrorDescription ?? "Authentication failed");
 
-                            var json = System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
-                            {
-                                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                            });
+                            var json = JsonSerializer.Serialize(response, JsonOptions);
 
                             return context.Response.WriteAsync(json);
                         },
@@ -256,10 +261,7 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                                 "Forbidden",
                                 "You do not have permission to access this resource");
 
-                            var json = System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
-                            {
-                                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                            });
+                            var json = JsonSerializer.Serialize(response, JsonOptions);
 
                             return context.Response.WriteAsync(json);
                         }
@@ -267,20 +269,13 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                 });
 
 
-            builder.Services.AddAuthorization(options =>
-            {
-                // Remove FallbackPolicy to allow anonymous access to Swagger
-                // Controllers will use [Authorize] attribute for protection
-
-                options.AddPolicy("AdminOnly", policy =>
-                    policy.RequireRole("Admin"));
-
-                options.AddPolicy("UserOrAdmin", policy =>
-                    policy.RequireRole("User", "Admin"));
-
-                options.AddPolicy("AuthenticatedUser", policy =>
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy("AdminOnly", policy =>
+                    policy.RequireRole("Admin"))
+                .AddPolicy("UserOrAdmin", policy =>
+                    policy.RequireRole("User", "Admin"))
+                .AddPolicy("AuthenticatedUser", policy =>
                     policy.RequireAuthenticatedUser());
-            });
 
             // Add HttpContextAccessor
             builder.Services.AddHttpContextAccessor();
