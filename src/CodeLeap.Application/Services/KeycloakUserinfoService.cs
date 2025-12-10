@@ -16,8 +16,8 @@ namespace CodeLeap.Application.Services
                     context != null,
                     context?.User?.Identity?.IsAuthenticated ?? false);
 
-                return context?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? context?.User?.FindFirst("sub")?.Value;
+                return context?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value.ToString()
+                       ?? context?.User?.FindFirst("sub")?.Value.ToString();
             }
         }
 

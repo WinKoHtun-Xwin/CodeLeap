@@ -1,24 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using CodeLeap.Application.Interfaces;
 
-namespace CodeLeap.Infrastructure.Services
+namespace CodeLeap.Infrastructure.Services;
+
+public class LoggerService<T>(ILogger<LoggerService<T>> logger) : ILoggerService<T>
 {
-    public class LoggerService<T> : ILoggerService<T>
-    {
-        private readonly ILogger<LoggerService<T>> _logger;
+    public void Info(string message, params object[] args)
+        => logger.LogInformation(message, args);
 
-        public LoggerService(ILogger<LoggerService<T>> logger)
-        {
-            _logger = logger;
-        }
+    public void Warning(string message, params object[] args)
+        => logger.LogWarning(message, args);
 
-        public void Info(string message, params object[] args)
-            => _logger.LogInformation(message, args);
-
-        public void Warning(string message, params object[] args)
-            => _logger.LogWarning(message, args);
-
-        public void Error(string message, params object[] args)
-            => _logger.LogError(message, args);
-    }
+    public void Error(string message, params object[] args)
+        => logger.LogError(message, args);
 }

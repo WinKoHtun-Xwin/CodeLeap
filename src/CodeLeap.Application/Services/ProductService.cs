@@ -138,9 +138,9 @@ namespace CodeLeap.Application.Services
                     return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
                 }
 
-                _logger.Info("Creating product By User : {userId}", userId);
-                var existingProduct = await _productRepository.GetProductByNameAsync(createProductDto.Name);
-                if (existingProduct != null)
+                _logger.Info("Creating product By User : {userId}", userId.ToString());
+
+                if (await _productRepository.IsExistingProductAsync(createProductDto.Name))
                 {
                     _logger.Error("Product already exists : {name} By User : {userId}", createProductDto.Name, userId);
                     return BaseResponseModel<ProductDto>.Failure(
