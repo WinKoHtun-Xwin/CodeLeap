@@ -30,6 +30,7 @@ namespace CodeLeap.Application.Services
                 var response = new BaseResponseModelPagination<IEnumerable<ProductDto>>
                 {
                     Success = true,
+                    StatusCode = HttpStatusCodes.Ok,
                     Data = productDtos,
                     Message = ResponseMessage.ProductMessage.GetAllSuccess,
                     Pagination = new PaginationDto
@@ -49,6 +50,7 @@ namespace CodeLeap.Application.Services
                 return new BaseResponseModelPagination<IEnumerable<ProductDto>>
                 {
                     Success = false,
+                    StatusCode = HttpStatusCodes.InternalServerError,
                     Message = ResponseMessage.ProductMessage.CreatedFail,
                     Error = ex.Message
                 };
@@ -73,7 +75,7 @@ namespace CodeLeap.Application.Services
             catch (Exception ex)
             {
                 _logger.Error("Error getting all products", ex);
-                return BaseResponseModel<IEnumerable<ProductDto>>.Failure(
+                return BaseResponseModel<IEnumerable<ProductDto>>.ServerErrorResponse(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
                 );
@@ -92,7 +94,7 @@ namespace CodeLeap.Application.Services
                 if (product == null)
                 {
                     _logger.Error("Product not found : {id} By User : {userId}", id, userId);
-                    return BaseResponseModel<ProductDto>.Failure(
+                    return BaseResponseModel<ProductDto>.NotFoundResponse(
                         ResponseMessage.ProductMessage.NotFound
                     );
                 }
@@ -105,7 +107,7 @@ namespace CodeLeap.Application.Services
             catch (Exception ex)
             {
                 _logger.Error("Error getting product by id", ex);
-                return BaseResponseModel<ProductDto>.Failure(
+                return BaseResponseModel<ProductDto>.ServerErrorResponse(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
                 );
@@ -123,7 +125,7 @@ namespace CodeLeap.Application.Services
                 if (await _productRepository.IsExistingProductAsync(createProductDto.Name))
                 {
                     _logger.Error("Product already exists : {name} By User : {userId}", createProductDto.Name, userId);
-                    return BaseResponseModel<ProductDto>.Failure(
+                    return BaseResponseModel<ProductDto>.ConflictResponse(
                         ResponseMessage.ProductMessage.AlreadyExists
                     );
                 }
@@ -144,7 +146,7 @@ namespace CodeLeap.Application.Services
                 if (createdProduct == null)
                 {
                     _logger.Error("Product creation failed By User : {userId}", userId);
-                    return BaseResponseModel<ProductDto>.Failure(
+                    return BaseResponseModel<ProductDto>.ServerErrorResponse(
                         ResponseMessage.ProductMessage.CreatedFail
                     );
                 }
@@ -153,13 +155,14 @@ namespace CodeLeap.Application.Services
 
                 return BaseResponseModel<ProductDto>.SuccessResponse(
                     MapToProductDto(createdProduct)!,
+                    HttpStatusCodes.Created,
                     ResponseMessage.ProductMessage.CreatedSuccess
                 );
             }
             catch (Exception ex)
             {
                 _logger.Error("Error creating product", ex);
-                return BaseResponseModel<ProductDto>.Failure(
+                return BaseResponseModel<ProductDto>.ServerErrorResponse(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
                 );
@@ -178,7 +181,7 @@ namespace CodeLeap.Application.Services
                 if (existingProduct == null)
                 {
                     _logger.Error("Product not found : {ProductId} By User : {userId}", ProductId, userId);
-                    return BaseResponseModel<ProductDto>.Failure(
+                    return BaseResponseModel<ProductDto>.NotFoundResponse(
                         ResponseMessage.ProductMessage.NotFound
                     );
                 }
@@ -196,7 +199,7 @@ namespace CodeLeap.Application.Services
                 if (updatedProduct == null)
                 {
                     _logger.Error("Product update failed By User : {userId}", userId);
-                    return BaseResponseModel<ProductDto>.Failure(
+                    return BaseResponseModel<ProductDto>.ServerErrorResponse(
                         ResponseMessage.ProductMessage.UpdatedFail
                     );
                 }
@@ -211,7 +214,7 @@ namespace CodeLeap.Application.Services
             catch (Exception ex)
             {
                 _logger.Error("Error updating product", ex);
-                return BaseResponseModel<ProductDto>.Failure(
+                return BaseResponseModel<ProductDto>.ServerErrorResponse(
                     ResponseMessage.ProductMessage.UpdatedFail,
                     ex.Message
                 );
@@ -230,7 +233,7 @@ namespace CodeLeap.Application.Services
                 if (existingProduct == null)
                 {
                     _logger.Error("Product not found : {id} By User : {userId}", id, userId);
-                    return BaseResponseModel<bool>.Failure(
+                    return BaseResponseModel<bool>.NotFoundResponse(
                         ResponseMessage.ProductMessage.NotFound
                     );
                 }
@@ -247,7 +250,7 @@ namespace CodeLeap.Application.Services
             catch (Exception ex)
             {
                 _logger.Error("Error deleting product", ex);
-                return BaseResponseModel<bool>.Failure(
+                return BaseResponseModel<bool>.ServerErrorResponse(
                     ResponseMessage.ProductMessage.DeletedFail,
                     ex.Message
                 );

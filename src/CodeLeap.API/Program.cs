@@ -245,6 +245,7 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                             context.Response.ContentType = "application/json";
 
                             var response = BaseResponseModel<object>.Failure(
+                                HttpStatusCodes.Unauthorized,
                                 "Unauthorized",
                                 context.ErrorDescription ?? "Authentication failed");
 
@@ -258,6 +259,7 @@ Example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'",
                             context.Response.ContentType = "application/json";
 
                             var response = BaseResponseModel<object>.Failure(
+                                HttpStatusCodes.Forbidden,
                                 "Forbidden",
                                 "You do not have permission to access this resource");
 

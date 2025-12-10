@@ -23,6 +23,7 @@ namespace CodeLeap.API.Filters
                 var errorMessages = string.Join("; ", errors.SelectMany(e => e.Value));
 
                 var response = BaseResponseModel<object>.Failure(
+                    HttpStatusCodes.BadRequest,
                     ResponseMessage.GeneralMessage.ValidationFailed,
                     errorMessages
                 );

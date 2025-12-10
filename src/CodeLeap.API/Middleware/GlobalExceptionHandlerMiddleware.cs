@@ -33,26 +33,24 @@ namespace CodeLeap.API.Middleware
             var response = exception switch
             {
                 ArgumentException => BaseResponseModel<object>.Failure(
+                    HttpStatusCodes.BadRequest,
                     ResponseMessage.GeneralMessage.ValidationFailed,
                     exception.Message),
                 KeyNotFoundException => BaseResponseModel<object>.Failure(
+                    HttpStatusCodes.NotFound,
                     ResponseMessage.GeneralMessage.NotFound,
                     exception.Message),
                 UnauthorizedAccessException => BaseResponseModel<object>.Failure(
+                    HttpStatusCodes.Unauthorized,
                     ResponseMessage.GeneralMessage.Unauthorized,
                     exception.Message),
                 _ => BaseResponseModel<object>.Failure(
+                    HttpStatusCodes.InternalServerError,
                     ResponseMessage.GeneralMessage.InternalServerError,
                     "An unexpected error occurred")
             };
 
-            context.Response.StatusCode = exception switch
-            {
-                ArgumentException => (int)HttpStatusCode.BadRequest,
-                KeyNotFoundException => (int)HttpStatusCode.NotFound,
-                UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
-                _ => (int)HttpStatusCode.InternalServerError
-            };
+            context.Response.StatusCode = response.StatusCode;
 
             var jsonResponse = JsonSerializer.Serialize(response, JsonOptions);
 
