@@ -28,7 +28,7 @@ namespace CodeLeap.Test
             // Arrange
             var products = new List<ProductEntity>
             {
-                new ProductEntity
+                new()
                 {
                     Id = "1",
                     Name = "Product 1",
@@ -39,7 +39,7 @@ namespace CodeLeap.Test
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = "user1"
                 },
-                new ProductEntity
+                new()
                 {
                     Id = "2",
                     Name = "Product 2",
@@ -141,7 +141,7 @@ namespace CodeLeap.Test
             // Arrange
             currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
             productRepo.Setup(x => x.CreateProductAsync(It.IsAny<ProductEntity>()))
-                      .ReturnsAsync((ProductEntity?)null);
+                      .ReturnsAsync((ProductEntity?)null!);
 
             var createProductDto = new CreateProductDto
             {
@@ -242,7 +242,7 @@ namespace CodeLeap.Test
             currentUserService.Setup(x => x.GetUserId()).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
             productRepo.Setup(x => x.UpdateProductAsync("1", It.IsAny<ProductEntity>()))
-                      .ReturnsAsync((ProductEntity?)null);
+                      .ReturnsAsync((ProductEntity?)null!);
 
             var updateProductDto = new CreateProductDto
             {
