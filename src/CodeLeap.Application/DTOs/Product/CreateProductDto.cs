@@ -17,7 +17,7 @@ namespace CodeLeap.Application.DTOs.Product
         [Range(0, int.MaxValue, ErrorMessage = "Stock must be a non-negative integer")]
         public required int Stock { get; set; }
 
-        [Url(ErrorMessage = "ImageUrl must be a valid URL")]
+        [StringLength(200, ErrorMessage = "ImageUrl cannot exceed 200 characters")]
         public required string ImageUrl { get; set; }
     }
 }

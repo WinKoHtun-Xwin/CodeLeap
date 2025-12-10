@@ -11,13 +11,9 @@ namespace CodeLeap.API.Controllers
     [Route("api/[controller]")]
     [Authorize]
     [SwaggerTag("Product management endpoints for creating, reading, updating, and deleting products")]
-    public class ProductController : BaseController
+    public class ProductController(IProductService productService) : BaseController
     {
-        private readonly IProductService _productService;
-        public ProductController(IProductService ProductService)
-        {
-            _productService = ProductService;
-        }
+        private readonly IProductService _productService = productService;
 
         [HttpGet("pagination")]
         [AllowAnonymous]
@@ -75,7 +71,7 @@ namespace CodeLeap.API.Controllers
         public async Task<ActionResult<BaseResponseModel<IEnumerable<ProductDto>>>> GetMyProducts()
         {
             var result = await _productService.GetAllProductsAsync();
-            
+
             return Ok(result);
         }
 

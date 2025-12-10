@@ -22,7 +22,7 @@ namespace CodeLeap.Infrastructure
 
             services.AddScoped<IProductRepository, ProductRepository>();
 
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
+
             services.AddScoped<IKeycloakUserinfoService, KeycloakUserinfoService>();
 
             services.AddScoped<IPasswordService, PasswordService>();

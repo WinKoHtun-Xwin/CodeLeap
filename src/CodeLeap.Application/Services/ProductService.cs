@@ -7,25 +7,30 @@ using System.Data;
 
 namespace CodeLeap.Application.Services
 {
-    public class ProductService : IProductService
+    public class ProductService(
+        IProductRepository productRepository,
+        IKeycloakUserinfoService currentUserService,
+        ILoggerService<ProductService> logger) : IProductService
     {
-        private const string UnknownUser = "Unknown";
-        private readonly IProductRepository _productRepository;
-        private readonly IKeycloakUserinfoService _currentUserService;
-        private readonly ILoggerService<ProductService> _logger;
+        private readonly IProductRepository _productRepository = productRepository;
+        private readonly IKeycloakUserinfoService _currentUserService = currentUserService;
+        private readonly ILoggerService<ProductService> _logger = logger;
 
-        public ProductService(IProductRepository productRepository, IKeycloakUserinfoService currentUserService, ILoggerService<ProductService> logger)
-        {
-
-            _productRepository = productRepository;
-            _currentUserService = currentUserService;
-            _logger = logger;
-        }
         public async Task<BaseResponseModelPagination<IEnumerable<ProductDto>>> GetProductsByPaginationAsync(PaginationRequestDto paginationRequestDto)
         {
             try
             {
-                _logger.Info("Getting products by pagination By User : {userId}", _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return new BaseResponseModelPagination<IEnumerable<ProductDto>>
+                    {
+                        Success = false,
+                        Message = ResponseMessage.GeneralMessage.Unauthorized
+                    };
+                }
+
+                _logger.Info("Getting products by pagination By User : {userId}", userId);
                 var products = await _productRepository.GetProductsByPaginationAsync(paginationRequestDto.PageNumber, paginationRequestDto.PageSize, paginationRequestDto.Search ?? string.Empty);
                 var productDtos = products.Select(MapToProductDto).Where(dto => dto != null).Cast<ProductDto>();
                 var totalItems = await _productRepository.GetTotalItemsAsync();
@@ -48,7 +53,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error getting products by pagination By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error getting products by pagination", ex);
                 return new BaseResponseModelPagination<IEnumerable<ProductDto>>
                 {
                     Success = false,
@@ -62,7 +67,13 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Getting all products By User : {userId}", _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BaseResponseModel<IEnumerable<ProductDto>>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
+                }
+
+                _logger.Info("Getting all products By User : {userId}", userId);
                 var products = await _productRepository.GetAllProductAsync();
                 var productDtos = products.Select(MapToProductDto).Where(dto => dto != null).Cast<ProductDto>();
 
@@ -73,7 +84,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error getting all products By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error getting all products", ex);
                 return BaseResponseModel<IEnumerable<ProductDto>>.Failure(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
@@ -85,12 +96,18 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Getting product by id : {id} By User : {userId}", id, _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
+                }
+
+                _logger.Info("Getting product by id : {id} By User : {userId}", id, userId);
                 var product = await _productRepository.GetProductByIdAsync(id);
 
                 if (product == null)
                 {
-                    _logger.Error("Product not found : {id} By User : {userId}", id, _currentUserService.UserId!);
+                    _logger.Error("Product not found : {id} By User : {userId}", id, userId);
                     return BaseResponseModel<ProductDto>.Failure(
                         ResponseMessage.ProductMessage.NotFound
                     );
@@ -103,7 +120,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error getting product by id By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error getting product by id", ex);
                 return BaseResponseModel<ProductDto>.Failure(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
@@ -115,16 +132,22 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Creating product By User : {userId}", _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
+                }
+
+                _logger.Info("Creating product By User : {userId}", userId);
                 var existingProduct = await _productRepository.GetProductByNameAsync(createProductDto.Name);
                 if (existingProduct != null)
                 {
-                    _logger.Error("Product already exists : {name} By User : {userId}", createProductDto.Name, _currentUserService.UserId!);
+                    _logger.Error("Product already exists : {name} By User : {userId}", createProductDto.Name, userId);
                     return BaseResponseModel<ProductDto>.Failure(
                         ResponseMessage.ProductMessage.AlreadyExists
                     );
                 }
-                ProductEntity newProduct = new ProductEntity
+                ProductEntity newProduct = new()
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = createProductDto.Name,
@@ -132,20 +155,21 @@ namespace CodeLeap.Application.Services
                     Price = createProductDto.Price,
                     Stock = createProductDto.Stock,
                     ImageUrl = createProductDto.ImageUrl,
-                    CreatedBy = _currentUserService.UserId!,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = userId,
                 };
 
                 var createdProduct = await _productRepository.CreateProductAsync(newProduct);
 
                 if (createdProduct == null)
                 {
-                    _logger.Error("Product creation failed By User : {userId}", _currentUserService.UserId!);
+                    _logger.Error("Product creation failed By User : {userId}", userId);
                     return BaseResponseModel<ProductDto>.Failure(
                         ResponseMessage.ProductMessage.CreatedFail
                     );
                 }
 
-                _logger.Info("Product created successfully By User : {userId}", _currentUserService.UserId!);
+                _logger.Info("Product created successfully By User : {userId}", userId);
 
                 return BaseResponseModel<ProductDto>.SuccessResponse(
                     MapToProductDto(createdProduct)!,
@@ -154,7 +178,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error creating product By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error creating product", ex);
                 return BaseResponseModel<ProductDto>.Failure(
                     ResponseMessage.ProductMessage.CreatedFail,
                     ex.Message
@@ -166,12 +190,18 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Updating product By User : {userId}", _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BaseResponseModel<ProductDto>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
+                }
+
+                _logger.Info("Updating product By User : {userId}", userId);
                 var existingProduct = await _productRepository.GetProductByIdAsync(ProductId);
 
                 if (existingProduct == null)
                 {
-                    _logger.Error("Product not found : {ProductId} By User : {userId}", ProductId, _currentUserService.UserId!);
+                    _logger.Error("Product not found : {ProductId} By User : {userId}", ProductId, userId);
                     return BaseResponseModel<ProductDto>.Failure(
                         ResponseMessage.ProductMessage.NotFound
                     );
@@ -182,20 +212,20 @@ namespace CodeLeap.Application.Services
                 existingProduct.Price = updateProductDto.Price;
                 existingProduct.Stock = updateProductDto.Stock;
                 existingProduct.ImageUrl = updateProductDto.ImageUrl;
-                existingProduct.UpdatedBy = _currentUserService.UserId!;
+                existingProduct.UpdatedBy = userId;
                 existingProduct.UpdatedAt = DateTime.UtcNow;
 
                 var updatedProduct = await _productRepository.UpdateProductAsync(ProductId, existingProduct);
 
                 if (updatedProduct == null)
                 {
-                    _logger.Error("Product update failed By User : {userId}", _currentUserService.UserId!);
+                    _logger.Error("Product update failed By User : {userId}", userId);
                     return BaseResponseModel<ProductDto>.Failure(
                         ResponseMessage.ProductMessage.UpdatedFail
                     );
                 }
 
-                _logger.Info("Product updated successfully By User : {userId}", _currentUserService.UserId!);
+                _logger.Info("Product updated successfully By User : {userId}", userId);
 
                 return BaseResponseModel<ProductDto>.SuccessResponse(
                     MapToProductDto(updatedProduct)!,
@@ -204,7 +234,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error updating product By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error updating product", ex);
                 return BaseResponseModel<ProductDto>.Failure(
                     ResponseMessage.ProductMessage.UpdatedFail,
                     ex.Message
@@ -216,12 +246,18 @@ namespace CodeLeap.Application.Services
         {
             try
             {
-                _logger.Info("Deleting product By User : {userId}", _currentUserService.UserId!);
+                var userId = _currentUserService.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BaseResponseModel<bool>.Failure(ResponseMessage.GeneralMessage.Unauthorized);
+                }
+
+                _logger.Info("Deleting product By User : {userId}", userId);
                 var existingProduct = await _productRepository.GetProductByIdAsync(id);
 
                 if (existingProduct == null)
                 {
-                    _logger.Error("Product not found : {id} By User : {userId}", id, _currentUserService.UserId!);
+                    _logger.Error("Product not found : {id} By User : {userId}", id, userId);
                     return BaseResponseModel<bool>.Failure(
                         ResponseMessage.ProductMessage.NotFound
                     );
@@ -229,7 +265,7 @@ namespace CodeLeap.Application.Services
 
                 await _productRepository.DeleteProductAsync(id);
 
-                _logger.Info("Product deleted successfully By User : {userId}", _currentUserService.UserId!);
+                _logger.Info("Product deleted successfully By User : {userId}", userId);
 
                 return BaseResponseModel<bool>.SuccessResponse(
                     true,
@@ -238,7 +274,7 @@ namespace CodeLeap.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.Error("Error deleting product By User : {userId}", _currentUserService.UserId!, ex);
+                _logger.Error("Error deleting product", ex);
                 return BaseResponseModel<bool>.Failure(
                     ResponseMessage.ProductMessage.DeletedFail,
                     ex.Message

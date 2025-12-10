@@ -67,7 +67,8 @@ namespace CodeLeap.API
                          -d 'client_secret=codeleap-api-secret' \
                          -d 'username=admin' \
                          -d 'password=admin123' \
-                         -d 'grant_type=password'
+                         -d 'grant_type=password' \
+                         -d 'scope=openid'
                        ```
                     2. Copy the `access_token` from response
                     3. Click **Authorize**, select 'Bearer' scheme
