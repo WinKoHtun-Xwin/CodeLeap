@@ -3,13 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeLeap.Infrastructure.PostgresSQL
 {
-    public class PostgresSqlDbContext : DbContext
+    public class PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : DbContext(options)
     {
-        public PostgresSqlDbContext(DbContextOptions<PostgresSqlDbContext> options) : base(options)
-        {
-        }
-
-        public DbSet<ProductEntity> Products { get; set; }
+        public DbSet<ProductEntity> Products { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
