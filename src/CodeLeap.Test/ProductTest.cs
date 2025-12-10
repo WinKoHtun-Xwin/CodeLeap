@@ -177,8 +177,8 @@ namespace CodeLeap.Test
 
             currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
-            productRepo.Setup(x => x.UpdateProductAsync("1", It.IsAny<ProductEntity>()))
-                      .ReturnsAsync((string id, ProductEntity input) => input);
+            productRepo.Setup(x => x.UpdateProductAsync(It.IsAny<ProductEntity>(), It.IsAny<ProductEntity>()))
+                      .ReturnsAsync((ProductEntity existing, ProductEntity input) => input);
 
             var updateProductDto = new CreateProductDto
             {
@@ -241,7 +241,7 @@ namespace CodeLeap.Test
 
             currentUserService.Setup(x => x.UserId).Returns("current-user-id");
             productRepo.Setup(x => x.GetProductByIdAsync("1")).ReturnsAsync(existingProduct);
-            productRepo.Setup(x => x.UpdateProductAsync("1", It.IsAny<ProductEntity>()))
+            productRepo.Setup(x => x.UpdateProductAsync(It.IsAny<ProductEntity>(), It.IsAny<ProductEntity>()))
                       .ReturnsAsync((ProductEntity?)null!);
 
             var updateProductDto = new CreateProductDto

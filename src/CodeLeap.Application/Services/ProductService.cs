@@ -169,57 +169,41 @@ namespace CodeLeap.Application.Services
             }
         }
 
-        public async Task<BaseResponseModel<ProductDto>> UpdateProductAsync(string ProductId, CreateProductDto updateProductDto)
+        public async Task<BaseResponseModel<ProductDto>> UpdateProductAsync(string productId, CreateProductDto dto)
         {
-            try
-            {
-                var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
+            var userId = _currentUserService.UserId!;
+            var product = await _productRepository.GetProductByIdAsync(productId);
 
-                _logger.Info("Updating product By User : {userId}", userId);
-                var existingProduct = await _productRepository.GetProductByIdAsync(ProductId);
-
-                if (existingProduct == null)
-                {
-                    _logger.Error("Product not found : {ProductId} By User : {userId}", ProductId, userId);
-                    return BaseResponseModel<ProductDto>.NotFoundResponse(
-                        ResponseMessage.ProductMessage.NotFound
-                    );
-                }
-
-                existingProduct.Name = updateProductDto.Name;
-                existingProduct.Description = updateProductDto.Description;
-                existingProduct.Price = updateProductDto.Price;
-                existingProduct.Stock = updateProductDto.Stock;
-                existingProduct.ImageUrl = updateProductDto.ImageUrl;
-                existingProduct.UpdatedBy = userId;
-                existingProduct.UpdatedAt = DateTime.UtcNow;
-
-                var updatedProduct = await _productRepository.UpdateProductAsync(ProductId, existingProduct);
-
-                if (updatedProduct == null)
-                {
-                    _logger.Error("Product update failed By User : {userId}", userId);
-                    return BaseResponseModel<ProductDto>.ServerErrorResponse(
-                        ResponseMessage.ProductMessage.UpdatedFail
-                    );
-                }
-
-                _logger.Info("Product updated successfully By User : {userId}", userId);
-
-                return BaseResponseModel<ProductDto>.SuccessResponse(
-                    MapToProductDto(updatedProduct)!,
-                    ResponseMessage.ProductMessage.UpdatedSuccess
+            if (product == null)
+                return BaseResponseModel<ProductDto>.NotFoundResponse(
+                    ResponseMessage.ProductMessage.NotFound
                 );
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Error updating product", ex);
-                return BaseResponseModel<ProductDto>.ServerErrorResponse(
-                    ResponseMessage.ProductMessage.UpdatedFail,
-                    ex.Message
+
+            // Check for conflict
+            var conflict = await _productRepository.IsExistingProductAsync(dto.Name, productId);
+            if (conflict)
+                return BaseResponseModel<ProductDto>.ConflictResponse(
+                    ResponseMessage.ProductMessage.AlreadyExists
                 );
-            }
+
+            // Only update changed fields (EF tracks automatically)
+            if (product.Name != dto.Name) product.Name = dto.Name;
+            if (product.Description != dto.Description) product.Description = dto.Description;
+            if (product.Price != dto.Price) product.Price = dto.Price;
+            if (product.Stock != dto.Stock) product.Stock = dto.Stock;
+            if (product.ImageUrl != dto.ImageUrl) product.ImageUrl = dto.ImageUrl;
+
+            product.UpdatedBy = userId;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await _productRepository.UpdateProductAsync(product, product);
+
+            return BaseResponseModel<ProductDto>.SuccessResponse(
+                MapToProductDto(product)!,
+                ResponseMessage.ProductMessage.UpdatedSuccess
+            );
         }
+
 
         public async Task<BaseResponseModel<bool>> DeleteProductAsync(string id)
         {
