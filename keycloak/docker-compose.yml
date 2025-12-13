@@ -28,6 +28,8 @@ services:
       # Admin Credentials
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+
+      KC_HOSTNAME_STRICT_BACKCHANNEL: true
     ports:
       - "8080:8080"  # Keycloak HTTP
       - "9000:9000"  # Keycloak metrics
@@ -43,5 +45,5 @@ networks:
   codeleap-network:
     name: codeleap-network
     driver: bridge
-    external: false
+    external: true
 
