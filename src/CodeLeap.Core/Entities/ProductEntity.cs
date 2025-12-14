@@ -9,10 +9,13 @@ namespace CodeLeap.Core.Entities
 {
     public class ProductEntity : BaseEntity
     {
+        [CodeLeap.Core.Attributes.Searchable]
         public required string Name { get; set; }
         public required decimal Price { get; set; }
+        [CodeLeap.Core.Attributes.Searchable]
         public required string Description { get; set; }
         public required int Stock { get; set; }
+
         public required string ImageUrl { get; set; }
     }
 }

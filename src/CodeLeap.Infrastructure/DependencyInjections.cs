@@ -20,6 +20,7 @@ namespace CodeLeap.Infrastructure
                     b => b.MigrationsAssembly("CodeLeap.Infrastructure"));
             });
 
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IProductRepository, ProductRepository>();
 
 

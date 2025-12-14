@@ -23,9 +23,13 @@ namespace CodeLeap.Application.Services
                 var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting products by pagination By User : {userId}", userId);
-                var products = await _productRepository.GetProductsByPaginationAsync(paginationRequestDto.PageNumber, paginationRequestDto.PageSize, paginationRequestDto.Search ?? string.Empty);
+                var products = await _productRepository.GetPagedReponseAsync(
+                    paginationRequestDto.PageNumber,
+                    paginationRequestDto.PageSize,
+                    searchTerm: paginationRequestDto.Search
+                );
                 var productDtos = products.Select(MapToProductDto).Where(dto => dto != null).Cast<ProductDto>();
-                var totalItems = await _productRepository.GetTotalItemsAsync();
+                var totalItems = await _productRepository.GetTotalCountAsync(searchTerm: paginationRequestDto.Search);
                 var totalPages = Math.Ceiling((double)totalItems / paginationRequestDto.PageSize);
                 var response = new BaseResponseModelPagination<IEnumerable<ProductDto>>
                 {
@@ -64,7 +68,7 @@ namespace CodeLeap.Application.Services
                 var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting all products By User : {userId}", userId);
-                var products = await _productRepository.GetAllProductAsync();
+                var products = await _productRepository.GetAllAsync();
                 var productDtos = products.Select(MapToProductDto).Where(dto => dto != null).Cast<ProductDto>();
 
                 return BaseResponseModel<IEnumerable<ProductDto>>.SuccessResponse(
@@ -89,7 +93,7 @@ namespace CodeLeap.Application.Services
                 var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Getting product by id : {id} By User : {userId}", id, userId);
-                var product = await _productRepository.GetProductByIdAsync(id);
+                var product = await _productRepository.GetByIdAsync(id);
 
                 if (product == null)
                 {
@@ -141,7 +145,8 @@ namespace CodeLeap.Application.Services
                     CreatedBy = userId,
                 };
 
-                var createdProduct = await _productRepository.CreateProductAsync(newProduct);
+                await _productRepository.AddAsync(newProduct);
+                var createdProduct = newProduct;
 
                 if (createdProduct == null)
                 {
@@ -172,7 +177,7 @@ namespace CodeLeap.Application.Services
         public async Task<BaseResponseModel<ProductDto>> UpdateProductAsync(string productId, CreateProductDto dto)
         {
             var userId = _currentUserService.UserId!;
-            var product = await _productRepository.GetProductByIdAsync(productId);
+            var product = await _productRepository.GetByIdAsync(productId);
 
             if (product == null)
                 return BaseResponseModel<ProductDto>.NotFoundResponse(
@@ -196,7 +201,7 @@ namespace CodeLeap.Application.Services
             product.UpdatedBy = userId;
             product.UpdatedAt = DateTime.UtcNow;
 
-            await _productRepository.UpdateProductAsync(product, product);
+            await _productRepository.UpdateAsync(product);
 
             return BaseResponseModel<ProductDto>.SuccessResponse(
                 MapToProductDto(product)!,
@@ -212,7 +217,7 @@ namespace CodeLeap.Application.Services
                 var userId = _currentUserService.UserId!; // Guaranteed by UserAuthorizationFilter
 
                 _logger.Info("Deleting product By User : {userId}", userId);
-                var existingProduct = await _productRepository.GetProductByIdAsync(id);
+                var existingProduct = await _productRepository.GetByIdAsync(id);
 
                 if (existingProduct == null)
                 {
@@ -222,7 +227,7 @@ namespace CodeLeap.Application.Services
                     );
                 }
 
-                await _productRepository.DeleteProductAsync(id);
+                await _productRepository.DeleteAsync(id);
 
                 _logger.Info("Product deleted successfully By User : {userId}", userId);
 
